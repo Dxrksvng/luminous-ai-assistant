@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUMINOUS — Personal AI by เจ</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0a0e1a;
+    --navy2: #0d1224;
+    --cyan: #00d4ff;
+    --cyan-dim: rgba(0,212,255,0.15);
+    --violet: #7b5ea7;
+    --violet-dim: rgba(123,94,167,0.2);
+    --white: #f0f4ff;
+    --white-dim: rgba(240,244,255,0.06);
+    --white-mid: rgba(240,244,255,0.12);
+    --glass: rgba(13,18,36,0.7);
+    --border: rgba(0,212,255,0.18);
+    --border-violet: rgba(123,94,167,0.3);
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── BOOT SEQUENCE ── */
+  #boot {
+    position: fixed; inset: 0;
+    background: #000;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    z-index: 1000;
+    transition: opacity 0.8s ease;
+  }
+  #boot.fade-out { opacity: 0; pointer-events: none; }
+
+  .boot-lines {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: var(--cyan);
+    width: 420px;
+    line-height: 2;
+  }
+  .boot-line {
+    opacity: 0;
+    display: block;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 0;
+  }
+  .boot-line.visible { opacity: 1; }
+  .boot-line.typed { width: auto; }
+  .boot-line-accent { color: var(--white); font-weight: 500; }
+  .boot-line-dim { color: rgba(0,212,255,0.45); font-size: 13px; }
+  .boot-cursor {
+    display: inline-block;
+    width: 8px; height: 15px;
+    background: var(--cyan);
+    animation: blink 0.7s step-end infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .boot-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: rgba(0,212,255,0.3);
+    margin-bottom: 48px;
+    text-transform: uppercase;
+  }
+
+  /* ── MAIN APP ── */
+  #app {
+    position: fixed; inset: 0;
+    opacity: 0;
+    transition: opacity 1s ease 0.3s;
+    display: grid;
+    grid-template-rows: 56px 1fr;
+    grid-template-columns: 1fr;
+    overflow: hidden;
+  }
+  #app.visible { opacity: 1; }
+
+  /* Particle canvas */
+  #particleCanvas {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── TOPBAR ── */
+  #topbar {
+    grid-row: 1;
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,14,26,0.85);
+    backdrop-filter: blur(20px);
+  }
+  .logo-mark {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    color: var(--white);
+    text-shadow: 0 0 20px rgba(0,212,255,0.5);
+  }
+  .logo-mark span { color: var(--cyan); }
+
+  .status-pill {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 11px; letter-spacing: 0.12em;
+    font-family: 'Space Grotesk', sans-serif;
+    color: rgba(0,212,255,0.7);
+    text-transform: uppercase;
+  }
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  .status-dot.thinking {
+    background: var(--violet);
+    box-shadow: 0 0 8px var(--violet);
+    animation: pulse-dot-fast 0.6s ease-in-out infinite;
+  }
+  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.7)} }
+  @keyframes pulse-dot-fast { 0%,100%{opacity:1;transform:scale(1.2)} 50%{opacity:0.4;transform:scale(0.7)} }
+
+  #statusLabel { transition: color 0.4s; }
+
+  .topbar-actions { display: flex; align-items: center; gap: 12px; }
+  .icon-btn {
+    width: 34px; height: 34px; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--white-dim);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    color: rgba(240,244,255,0.5);
+    font-size: 14px;
+  }
+  .icon-btn:hover { background: var(--cyan-dim); border-color: var(--cyan); color: var(--cyan); }
+  .icon-btn.active { background: var(--cyan-dim); border-color: var(--cyan); color: var(--cyan); }
+
+  /* ── MAIN AREA ── */
+  #main {
+    grid-row: 2;
+    position: relative; z-index: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── CHAT AREA ── */
+  #chatArea {
+    flex: 1;
+    display: flex; flex-direction: column;
+    position: relative;
+    transition: margin-right 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ── CHAT MESSAGES ── */
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 0 0;
+    scroll-behavior: smooth;
+    display: flex; flex-direction: column;
+    gap: 4px;
+  }
+  #messages::-webkit-scrollbar { width: 4px; }
+  #messages::-webkit-scrollbar-track { background: transparent; }
+  #messages::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.2); border-radius: 2px; }
+
+  .msg-row {
+    display: flex;
+    padding: 6px 36px;
+    animation: msg-in 0.4s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  @keyframes msg-in { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform:none; } }
+
+  .msg-row.je { justify-content: flex-end; }
+  .msg-row.lumi { justify-content: flex-start; align-items: flex-end; gap: 12px; }
+
+  .lumi-avatar {
+    width: 36px; height: 36px; flex-shrink: 0;
+    position: relative;
+  }
+  .lumi-avatar canvas { width: 36px; height: 36px; }
+
+  .bubble {
+    max-width: 520px;
+    padding: 13px 18px;
+    border-radius: 16px;
+    font-size: 14.5px;
+    line-height: 1.65;
+    font-family: 'Inter', sans-serif;
+  }
+  .bubble.lumi {
+    background: rgba(13,18,36,0.8);
+    border: 1px solid rgba(0,212,255,0.25);
+    box-shadow: 0 0 24px rgba(0,212,255,0.07), inset 0 1px 0 rgba(0,212,255,0.08);
+    color: var(--white);
+    border-bottom-left-radius: 4px;
+  }
+  .bubble.je {
+    background: linear-gradient(135deg, rgba(123,94,167,0.35), rgba(0,212,255,0.12));
+    border: 1px solid rgba(123,94,167,0.4);
+    color: var(--white);
+    border-bottom-right-radius: 4px;
+  }
+
+  .bubble-name {
+    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    margin-bottom: 5px;
+  }
+  .bubble-name.lumi { color: var(--cyan); }
+  .bubble-name.je { color: rgba(123,94,167,0.8); text-align: right; }
+
+  /* Typing indicator */
+  .typing-row { padding: 6px 36px; display: flex; align-items: flex-end; gap: 12px; }
+  .typing-dots {
+    display: flex; gap: 5px; align-items: center;
+    padding: 12px 16px;
+    background: rgba(13,18,36,0.8);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 16px 16px 16px 4px;
+  }
+  .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--cyan);
+    animation: typing-dot 1.2s ease-in-out infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing-dot {
+    0%,80%,100% { transform:scale(0.6); opacity:0.4; box-shadow: none; }
+    40% { transform:scale(1); opacity:1; box-shadow: 0 0 8px var(--cyan); }
+  }
+
+  /* ── INPUT BAR ── */
+  #inputWrap {
+    padding: 16px 36px 24px;
+    position: relative;
+  }
+  #inputBar {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--glass);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 10px 14px 10px 18px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  #inputBar:focus-within {
+    border-color: rgba(0,212,255,0.5);
+    box-shadow: 0 0 28px rgba(0,212,255,0.1);
+  }
+  #textInput {
+    flex: 1; border: none; outline: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--white);
+    resize: none;
+    max-height: 120px;
+    min-height: 22px;
+    line-height: 1.5;
+  }
+  #textInput::placeholder { color: rgba(240,244,255,0.25); }
+
+  .send-btn {
+    width: 36px; height: 36px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--cyan), rgba(0,180,220,0.8));
+    border: none; border-radius: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 0 16px rgba(0,212,255,0.3);
+  }
+  .send-btn:hover { transform: scale(1.07); box-shadow: 0 0 24px rgba(0,212,255,0.5); }
+  .send-btn svg { width:16px; height:16px; fill:var(--navy); }
+
+  .mic-btn {
+    width: 36px; height: 36px; flex-shrink: 0;
+    background: var(--white-dim);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(240,244,255,0.4);
+    font-size: 15px;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .mic-btn:hover { background: var(--violet-dim); border-color: var(--border-violet); color: var(--violet); }
+  .mic-btn.active { background: rgba(123,94,167,0.25); border-color: var(--violet); color: var(--violet); }
+  .mic-btn.active::before {
+    content: '';
+    position: absolute; inset: -4px; border-radius: 14px;
+    border: 1px solid var(--violet);
+    animation: mic-ring 1.5s ease-in-out infinite;
+    opacity: 0;
+  }
+  @keyframes mic-ring { 0%{inset:-4px;opacity:0.6} 100%{inset:-12px;opacity:0} }
+
+  /* ── HUD SIDEBAR ── */
+  #hud {
+    width: 280px;
+    flex-shrink: 0;
+    border-left: 1px solid var(--border);
+    background: rgba(10,14,26,0.7);
+    backdrop-filter: blur(20px);
+    display: flex; flex-direction: column;
+    gap: 0;
+    overflow-y: auto;
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s;
+    z-index: 5;
+  }
+  #hud.collapsed { width: 0; opacity: 0; overflow: hidden; }
+  #hud::-webkit-scrollbar { display: none; }
+
+  .hud-section {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid rgba(0,212,255,0.07);
+  }
+  .hud-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 9px; letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(0,212,255,0.4);
+    margin-bottom: 14px;
+  }
+
+  /* Clock */
+  #clock {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 38px; font-weight: 700;
+    color: var(--white);
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 24px rgba(0,212,255,0.25);
+    line-height: 1;
+  }
+  #clock-date {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px; color: rgba(240,244,255,0.35);
+    letter-spacing: 0.08em;
+    margin-top: 6px;
+  }
+
+  /* System bars */
+  .sys-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .sys-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 10px; letter-spacing: 0.1em;
+    color: rgba(240,244,255,0.4);
+    width: 36px; flex-shrink: 0;
+  }
+  .sys-bar-track {
+    flex: 1; height: 3px; background: rgba(240,244,255,0.07);
+    border-radius: 2px; overflow: hidden;
+  }
+  .sys-bar-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, var(--cyan), rgba(123,94,167,0.8));
+    transition: width 1.5s ease-in-out;
+    position: relative;
+  }
+  .sys-bar-fill::after {
+    content: ''; position: absolute; right: 0; top: -1px;
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+  }
+  .sys-val {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 10px; color: rgba(0,212,255,0.6);
+    width: 30px; text-align: right; flex-shrink: 0;
+  }
+
+  /* Task indicator */
+  .task-chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 12px;
+    background: var(--cyan-dim);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 100px;
+    font-size: 11px; letter-spacing: 0.05em;
+    color: var(--cyan);
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .task-chip-dot { width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 5px var(--cyan); }
+
+  /* Weather */
+  .weather-block {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .weather-icon {
+    font-size: 28px; line-height: 1;
+  }
+  .weather-temp {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px; font-weight: 400;
+    color: var(--white);
+  }
+  .weather-desc {
+    font-size: 11px; color: rgba(240,244,255,0.35);
+    font-family: 'Space Grotesk', sans-serif;
+    margin-top: 2px;
+  }
+  .weather-city {
+    font-size: 9px; letter-spacing: 0.2em;
+    color: rgba(0,212,255,0.4);
+    text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    margin-top: 3px;
+  }
+
+  /* Quick actions */
+  .quick-actions { display: flex; flex-direction: column; gap: 8px; }
+  .qa-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 13px;
+    background: var(--white-dim);
+    border: 1px solid rgba(240,244,255,0.06);
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px; color: rgba(240,244,255,0.55);
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+    text-align: left;
+  }
+  .qa-btn:hover { background: var(--cyan-dim); border-color: var(--border); color: var(--cyan); }
+  .qa-btn svg { width:14px; height:14px; flex-shrink:0; }
+
+  /* ── VOICE MODE ── */
+  #voiceMode {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(5,8,18,0.97);
+    backdrop-filter: blur(30px);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.5s;
+  }
+  #voiceMode.active { opacity: 1; pointer-events: all; }
+
+  #voiceOrb { position: relative; }
+  #voiceOrbCanvas { display: block; }
+
+  .voice-transcript {
+    margin-top: 40px;
+    width: 560px; text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 17px; line-height: 1.7;
+    color: rgba(240,244,255,0.6);
+    min-height: 60px;
+  }
+  .voice-transcript span { color: var(--white); }
+
+  .voice-exit {
+    position: fixed; top: 28px; right: 28px;
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--white-dim);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: rgba(240,244,255,0.5);
+    font-size: 18px;
+    transition: all 0.2s;
+  }
+  .voice-exit:hover { background: rgba(255,60,60,0.15); border-color: rgba(255,80,80,0.3); color: rgba(255,150,150,0.9); }
+
+  .voice-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 10px; letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(0,212,255,0.4);
+    margin-top: 12px;
+  }
+
+  /* ── ORB in messages ── */
+  .mini-orb-canvas { border-radius: 50%; }
+
+  /* ── TWEAKS PANEL ── */
+  #tweaks {
+    position: fixed; bottom: 80px; right: 20px;
+    width: 220px;
+    background: rgba(10,14,26,0.92);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    backdrop-filter: blur(20px);
+    z-index: 100;
+    display: none;
+  }
+  #tweaks.show { display: block; animation: panel-in 0.25s cubic-bezier(0.16,1,0.3,1); }
+  @keyframes panel-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+  .tweaks-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--cyan); margin-bottom: 14px;
+  }
+  .tweak-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .tweak-label { font-size: 11px; color: rgba(240,244,255,0.5); font-family: 'Space Grotesk', sans-serif; }
+  .tweak-toggle {
+    width: 36px; height: 20px; border-radius: 10px;
+    background: rgba(240,244,255,0.08); border: 1px solid rgba(240,244,255,0.1);
+    position: relative; cursor: pointer; transition: background 0.2s;
+  }
+  .tweak-toggle.on { background: rgba(0,212,255,0.3); border-color: var(--cyan); }
+  .tweak-toggle::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: rgba(240,244,255,0.4); transition: all 0.2s;
+  }
+  .tweak-toggle.on::after { left: 18px; background: var(--cyan); }
+  .tweak-select {
+    background: var(--white-dim); border: 1px solid var(--border);
+    border-radius: 6px; padding: 3px 7px;
+    font-size: 11px; color: var(--cyan);
+    font-family: 'Space Grotesk', sans-serif;
+    cursor: pointer; outline: none;
+    -webkit-appearance: none;
+  }
+  .tweak-select option { background: #0a0e1a; }
+
+  /* scan line overlay */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,212,255,0.012) 3px, rgba(0,212,255,0.012) 4px);
+    z-index: 999;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── BOOT SEQUENCE ── -->
+<div id="boot">
+  <div class="boot-logo">LUMINOUS SYSTEM</div>
+  <div class="boot-lines" id="bootLines"></div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<canvas id="particleCanvas"></canvas>
+<div id="app">
+
+  <!-- Topbar -->
+  <div id="topbar">
+    <div class="logo-mark">LUMI<span>N</span>OUS</div>
+    <div class="status-pill">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusLabel">ONLINE</span>
+    </div>
+    <div class="topbar-actions">
+      <div class="icon-btn" id="hudToggleBtn" title="HUD Panel" onclick="toggleHud()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="1" width="14" height="2" rx="1"/><rect x="0" y="6" width="9" height="2" rx="1"/><rect x="0" y="11" width="12" height="2" rx="1"/></svg>
+      </div>
+      <div class="icon-btn" id="voiceBtn" title="Voice Mode" onclick="enterVoice()">
+        <svg width="13" height="14" viewBox="0 0 13 14" fill="currentColor"><path d="M6.5 0C5.12 0 4 1.12 4 2.5v5C4 8.88 5.12 10 6.5 10S9 8.88 9 7.5v-5C9 1.12 7.88 0 6.5 0zM1.5 6.5A.5.5 0 001 7c0 3.04 2.35 5.5 5.5 5.5S12 10.04 12 7a.5.5 0 00-1 0c0 2.49-1.93 4.5-4.5 4.5S2 9.49 2 7a.5.5 0 00-.5-.5zM6 13h1v1H6z"/></svg>
+      </div>
+      <div class="icon-btn" id="tweakBtn" title="Tweaks" onclick="toggleTweaks()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="3" cy="7" r="1.5"/><circle cx="7" cy="3" r="1.5"/><circle cx="11" cy="10" r="1.5"/><path d="M4.5 7h8M0 7h1M8.5 3h4.5M0 3h5M12.5 10H14M0 10h9" stroke="currentColor" stroke-width="1.2"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+    <!-- Chat -->
+    <div id="chatArea">
+      <div id="messages">
+        <!-- sample messages injected by JS -->
+      </div>
+      <!-- Input -->
+      <div id="inputWrap">
+        <div id="inputBar">
+          <textarea id="textInput" rows="1" placeholder="พิมพ์ข้อความถึง Lumi…  /  Message Lumi…"></textarea>
+          <div class="mic-btn" id="micBtn" onclick="toggleMic()">
+            <svg width="14" height="16" viewBox="0 0 14 16" fill="currentColor"><path d="M7 0C5.62 0 4.5 1.12 4.5 2.5v6C4.5 9.88 5.62 11 7 11s2.5-1.12 2.5-2.5v-6C9.5 1.12 8.38 0 7 0zM1.5 7a.5.5 0 00-1 0C.5 10.59 3.24 13.5 7 13.5S13.5 10.59 13.5 7a.5.5 0 00-1 0C12.5 10.04 10.04 12.5 7 12.5S1.5 10.04 1.5 7zM6.5 14h1v2h-1z"/></svg>
+          </div>
+          <button class="send-btn" onclick="sendMessage()">
+            <svg viewBox="0 0 16 16"><path d="M15.7 7.3l-14-6a.5.5 0 00-.65.65l2.5 5.55-2.5 5.55a.5.5 0 00.65.65l14-6a.5.5 0 000-.9z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HUD Sidebar -->
+    <div id="hud">
+      <div class="hud-section">
+        <div class="hud-label">System Time — Bangkok</div>
+        <div id="clock">00:00:00</div>
+        <div id="clock-date">Loading...</div>
+      </div>
+
+      <div class="hud-section">
+        <div class="hud-label">System Resources</div>
+        <div class="sys-row">
+          <span class="sys-label">CPU</span>
+          <div class="sys-bar-track"><div class="sys-bar-fill" id="cpuBar" style="width:0"></div></div>
+          <span class="sys-val" id="cpuVal">0%</span>
+        </div>
+        <div class="sys-row">
+          <span class="sys-label">RAM</span>
+          <div class="sys-bar-track"><div class="sys-bar-fill" id="ramBar" style="width:0"></div></div>
+          <span class="sys-val" id="ramVal">0%</span>
+        </div>
+        <div class="sys-row">
+          <span class="sys-label">GPU</span>
+          <div class="sys-bar-track"><div class="sys-bar-fill" id="gpuBar" style="width:0"></div></div>
+          <span class="sys-val" id="gpuVal">0%</span>
+        </div>
+      </div>
+
+      <div class="hud-section">
+        <div class="hud-label">Current Mode</div>
+        <div class="task-chip"><div class="task-chip-dot"></div><span id="taskLabel">Chat Mode</span></div>
+      </div>
+
+      <div class="hud-section">
+        <div class="hud-label">Weather — กรุงเทพฯ</div>
+        <div class="weather-block">
+          <div class="weather-icon">🌤</div>
+          <div>
+            <div class="weather-temp">33°C</div>
+            <div class="weather-desc">Partly cloudy</div>
+            <div class="weather-city">Bangkok · ICT UTC+7</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-section">
+        <div class="hud-label">Quick Actions</div>
+        <div class="quick-actions">
+          <div class="qa-btn" onclick="newChat()">
+            <svg viewBox="0 0 14 14" fill="currentColor"><path d="M7 0a7 7 0 100 14A7 7 0 007 0zm1 8H8v1a1 1 0 11-2 0V8H5a1 1 0 110-2h1V5a1 1 0 112 0v1h1a1 1 0 110 2z"/></svg>
+            New Conversation
+          </div>
+          <div class="qa-btn" onclick="enterVoice()">
+            <svg viewBox="0 0 14 14" fill="currentColor"><path d="M7 0C5.62 0 4.5 1.12 4.5 2.5v5C4.5 8.88 5.62 10 7 10s2.5-1.12 2.5-2.5v-5C9.5 1.12 8.38 0 7 0zM1 7c0 3.31 2.69 6 6 6s6-2.69 6-6H11c0 2.21-1.79 4-4 4S3 9.21 3 7H1z"/></svg>
+            Voice Mode
+          </div>
+          <div class="qa-btn">
+            <svg viewBox="0 0 14 14" fill="currentColor"><path d="M7 0a7 7 0 100 14A7 7 0 007 0zM6 3h2v5H6zm0 6h2v2H6z"/></svg>
+            About Lumi
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── VOICE MODE ── -->
+<div id="voiceMode">
+  <div class="voice-exit" onclick="exitVoice()">✕</div>
+  <div id="voiceOrb"><canvas id="voiceOrbCanvas" width="300" height="300"></canvas></div>
+  <div class="voice-label" id="voiceLabel">กำลังฟัง… / Listening…</div>
+  <div class="voice-transcript" id="voiceTranscript">
+    <span>สวัสดีครับ เจ — พูดได้เลยครับ</span>
+  </div>
+</div>
+
+<!-- ── TWEAKS PANEL ── -->
+<div id="tweaks">
+  <div class="tweaks-title">Tweaks</div>
+  <div class="tweak-row">
+    <span class="tweak-label">HUD Sidebar</span>
+    <div class="tweak-toggle on" id="t-hud" onclick="tweak('hud')"></div>
+  </div>
+  <div class="tweak-row">
+    <span class="tweak-label">Scanlines</span>
+    <div class="tweak-toggle on" id="t-scan" onclick="tweak('scan')"></div>
+  </div>
+  <div class="tweak-row">
+    <span class="tweak-label">Particles</span>
+    <div class="tweak-toggle on" id="t-part" onclick="tweak('part')"></div>
+  </div>
+  <div class="tweak-row">
+    <span class="tweak-label">Orb Style</span>
+    <select class="tweak-select" id="t-orb" onchange="changeOrbStyle(this.value)">
+      <option value="orb">Orb</option>
+      <option value="hex">Hex</option>
+      <option value="ring">Rings</option>
+    </select>
+  </div>
+  <div class="tweak-row">
+    <span class="tweak-label">Accent</span>
+    <select class="tweak-select" id="t-accent" onchange="changeAccent(this.value)">
+      <option value="cyan">Cyan</option>
+      <option value="violet">Violet</option>
+      <option value="gold">Gold</option>
+    </select>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "hudOpen": true,
+  "scanlines": true,
+  "particles": true,
+  "orbStyle": "hex",
+  "accent": "gold",
+  "hud": true,
+  "scan": true,
+  "part": true
+}/*EDITMODE-END*/;
+let state = Object.assign({}, TWEAK_DEFAULTS);
+let hudOpen = true;
+let scanlines = true;
+let particlesOn = true;
+let orbStyle = 'orb';
+let accentColor = [0,212,255];
+let lumiState = 'idle'; // idle | thinking | speaking
+let micActive = false;
+let voiceModeOn = false;
+let messageCount = 0;
+
+// ════════════════════════════════════════
+// BOOT SEQUENCE
+// ════════════════════════════════════════
+const bootLines = [
+  {text:'LUMINOUS v1.0', cls:'', delay:0},
+  {text:'Copyright © 2026 เจ (Je) — AI Engineer', cls:'boot-line-dim', delay:600},
+  {text:'', cls:'', delay:900},
+  {text:'Initializing core neural systems...', cls:'', delay:1000},
+  {text:'Loading language model... ████████████ OK', cls:'boot-line-dim', delay:1500},
+  {text:'Loading Thai language module... ████████ OK', cls:'boot-line-dim', delay:1900},
+  {text:'Connecting to knowledge base...  ██████ OK', cls:'boot-line-dim', delay:2200},
+  {text:'', cls:'', delay:2500},
+  {text:'Hello, เจ. Ready when you are.', cls:'boot-line-accent', delay:2900},
+];
+
+function typeText(el, text, cb) {
+  let i = 0;
+  if (!text) { el.style.width='auto'; if(cb) setTimeout(cb,100); return; }
+  const iv = setInterval(() => {
+    el.textContent = text.slice(0, ++i);
+    if (i >= text.length) { clearInterval(iv); if(cb) setTimeout(cb, 80); }
+  }, 28);
+}
+
+function runBoot() {
+  const container = document.getElementById('bootLines');
+  const cursor = document.createElement('span');
+  cursor.className = 'boot-cursor';
+
+  let idx = 0;
+  function nextLine() {
+    if (idx >= bootLines.length) {
+      setTimeout(() => {
+        document.getElementById('boot').classList.add('fade-out');
+        document.getElementById('app').classList.add('visible');
+        setTimeout(initApp, 400);
+      }, 600);
+      return;
+    }
+    const item = bootLines[idx++];
+    setTimeout(() => {
+      const line = document.createElement('span');
+      line.className = 'boot-line ' + item.cls;
+      container.appendChild(line);
+      if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+      line.appendChild(cursor);
+      line.classList.add('visible');
+      typeText(line, item.text, () => {
+        nextLine();
+      });
+    }, item.delay - (bootLines[idx-1]?.delay || 0) + (idx===1?0:0));
+  }
+  // Absolute timing version
+  bootLines.forEach((item, i) => {
+    setTimeout(() => {
+      const line = document.createElement('span');
+      line.className = 'boot-line ' + item.cls;
+      container.appendChild(line);
+      if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+      if (item.text) {
+        line.appendChild(cursor);
+        line.classList.add('visible');
+        typeText(line, item.text, null);
+      }
+      if (i === bootLines.length - 1) {
+        setTimeout(() => {
+          cursor.style.display='none';
+          document.getElementById('boot').classList.add('fade-out');
+          document.getElementById('app').classList.add('visible');
+          setTimeout(initApp, 500);
+        }, 1200);
+      }
+    }, item.delay);
+  });
+}
+
+// ════════════════════════════════════════
+// PARTICLE BACKGROUND
+// ════════════════════════════════════════
+const pCanvas = document.getElementById('particleCanvas');
+const pCtx = pCanvas.getContext('2d');
+let particles = [];
+let animFrame;
+
+function resizeParticles() {
+  pCanvas.width = window.innerWidth;
+  pCanvas.height = window.innerHeight;
+}
+
+function initParticles() {
+  resizeParticles();
+  particles = [];
+  const count = Math.floor((pCanvas.width * pCanvas.height) / 14000);
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * pCanvas.width,
+      y: Math.random() * pCanvas.height,
+      vx: (Math.random() - 0.5) * 0.18,
+      vy: (Math.random() - 0.5) * 0.18,
+      r: Math.random() * 1.4 + 0.3,
+      a: Math.random() * 0.4 + 0.1,
+    });
+  }
+}
+
+function drawParticles() {
+  pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);
+  if (!particlesOn) return;
+
+  const [cr,cg,cb] = accentColor;
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = pCanvas.width;
+    if (p.x > pCanvas.width) p.x = 0;
+    if (p.y < 0) p.y = pCanvas.height;
+    if (p.y > pCanvas.height) p.y = 0;
+    pCtx.beginPath();
+    pCtx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    pCtx.fillStyle = `rgba(${cr},${cg},${cb},${p.a})`;
+    pCtx.fill();
+  });
+
+  // Connect nearby
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i+1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const d = Math.sqrt(dx*dx+dy*dy);
+      if (d < 90) {
+        pCtx.beginPath();
+        pCtx.moveTo(particles[i].x, particles[i].y);
+        pCtx.lineTo(particles[j].x, particles[j].y);
+        pCtx.strokeStyle = `rgba(${cr},${cg},${cb},${(1-d/90)*0.08})`;
+        pCtx.lineWidth = 0.5;
+        pCtx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(drawParticles);
+}
+
+// ════════════════════════════════════════
+// ORB DRAWING
+// ════════════════════════════════════════
+let orbTime = 0;
+
+function drawOrb(canvas, ctx, size, state, time) {
+  ctx.clearRect(0,0,size,size);
+  const cx=size/2, cy=size/2, r=size*0.3;
+  const [cr,cg,cb] = accentColor;
+  const vr=123,vg=94,vb=167;
+  const t = time * 0.001;
+
+  if (orbStyle === 'orb') {
+    // Outer glow ring
+    const glowSize = state==='thinking' ? 1.3 + Math.sin(t*4)*0.12 : 1.1 + Math.sin(t*1.5)*0.05;
+    const grad = ctx.createRadialGradient(cx,cy,0,cx,cy,r*glowSize*1.8);
+    if (state==='thinking') {
+      grad.addColorStop(0, `rgba(${vr},${vg},${vb},0.4)`);
+      grad.addColorStop(0.5, `rgba(${vr},${vg},${vb},0.1)`);
+    } else {
+      grad.addColorStop(0, `rgba(${cr},${cg},${cb},0.25)`);
+      grad.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.05)`);
+    }
+    grad.addColorStop(1,'transparent');
+    ctx.beginPath(); ctx.arc(cx,cy,r*glowSize*1.8,0,Math.PI*2);
+    ctx.fillStyle=grad; ctx.fill();
+
+    // Core sphere
+    const sphereGrad = ctx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.1,cx,cy,r*glowSize);
+    if (state==='thinking') {
+      sphereGrad.addColorStop(0, `rgba(${vr+50},${vg+50},${vb+50},0.9)`);
+      sphereGrad.addColorStop(0.5, `rgba(${vr},${vg},${vb},0.7)`);
+      sphereGrad.addColorStop(1, `rgba(${vr-30},${vg-30},${vb-30},0.3)`);
+    } else {
+      sphereGrad.addColorStop(0, `rgba(${cr},${cg},${cb},0.9)`);
+      sphereGrad.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.4)`);
+      sphereGrad.addColorStop(1, `rgba(${cr-20},${cg-60},${cb-20},0.1)`);
+    }
+    ctx.beginPath(); ctx.arc(cx,cy,r*glowSize,0,Math.PI*2);
+    ctx.fillStyle=sphereGrad; ctx.fill();
+
+    // Inner highlight
+    ctx.beginPath(); ctx.arc(cx-r*0.25,cy-r*0.25,r*0.22,0,Math.PI*2);
+    ctx.fillStyle = state==='thinking'?`rgba(220,200,255,0.6)`:`rgba(${cr},${cg},${cb},0.5)`;
+    ctx.fill();
+
+    // Orbit rings for thinking
+    if (state==='thinking') {
+      for (let i=0;i<2;i++) {
+        const angle = t*(2+i) + i*Math.PI/3;
+        ctx.save(); ctx.translate(cx,cy); ctx.rotate(angle);
+        ctx.beginPath(); ctx.ellipse(0,0,r*1.5,r*0.4,0,0,Math.PI*2);
+        ctx.strokeStyle=`rgba(${vr},${vg},${vb},${0.35-i*0.1})`;
+        ctx.lineWidth=1; ctx.stroke(); ctx.restore();
+      }
+    }
+
+    // Speaking waveform bars
+    if (state==='speaking') {
+      const bars = 16;
+      for (let i=0;i<bars;i++) {
+        const ang = (i/bars)*Math.PI*2;
+        const h = r*0.3*(0.5+Math.abs(Math.sin(t*8+i*0.8)));
+        const x1=cx+Math.cos(ang)*(r*1.15), y1=cy+Math.sin(ang)*(r*1.15);
+        const x2=cx+Math.cos(ang)*(r*1.15+h), y2=cy+Math.sin(ang)*(r*1.15+h);
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+        ctx.strokeStyle=`rgba(${cr},${cg},${cb},0.6)`;
+        ctx.lineWidth=2; ctx.lineCap='round'; ctx.stroke();
+      }
+    }
+
+  } else if (orbStyle === 'hex') {
+    // Hexagon style
+    const spin = state==='thinking'?t*1.5:t*0.3;
+    for (let layer=0;layer<3;layer++) {
+      const lr = r*(0.5+layer*0.3);
+      ctx.save(); ctx.translate(cx,cy); ctx.rotate(spin*(layer%2?1:-1));
+      ctx.beginPath();
+      for(let i=0;i<6;i++){
+        const a=i*Math.PI/3;
+        i===0?ctx.moveTo(Math.cos(a)*lr,Math.sin(a)*lr):ctx.lineTo(Math.cos(a)*lr,Math.sin(a)*lr);
+      }
+      ctx.closePath();
+      const alpha = state==='thinking'?0.5-layer*0.12:0.35-layer*0.08;
+      ctx.strokeStyle=state==='thinking'?`rgba(${vr},${vg},${vb},${alpha})`:`rgba(${cr},${cg},${cb},${alpha})`;
+      ctx.lineWidth=1.5; ctx.stroke(); ctx.restore();
+    }
+    const dotGrad=ctx.createRadialGradient(cx,cy,0,cx,cy,r*0.5);
+    dotGrad.addColorStop(0,state==='thinking'?`rgba(${vr+50},${vg+50},${vb+50},0.9)`:`rgba(${cr},${cg},${cb},0.9)`);
+    dotGrad.addColorStop(1,'transparent');
+    ctx.beginPath(); ctx.arc(cx,cy,r*0.5,0,Math.PI*2);
+    ctx.fillStyle=dotGrad; ctx.fill();
+
+  } else if (orbStyle === 'ring') {
+    // Concentric rings
+    const numRings=4;
+    for(let i=0;i<numRings;i++){
+      const spin=state==='thinking'?t*(1+i*0.5):t*(0.2+i*0.1);
+      const rr=r*(0.3+i*0.22);
+      const alpha=0.6-i*0.12;
+      ctx.save(); ctx.translate(cx,cy); ctx.rotate(spin*(i%2?1:-1));
+      ctx.beginPath(); ctx.arc(0,0,rr,0,Math.PI*1.7);
+      ctx.strokeStyle=state==='thinking'?`rgba(${vr},${vg},${vb},${alpha})`:`rgba(${cr},${cg},${cb},${alpha})`;
+      ctx.lineWidth=1+(numRings-i)*0.3; ctx.lineCap='round'; ctx.stroke();
+      ctx.restore();
+    }
+    // Center dot
+    const dotR=r*0.18;
+    const dg=ctx.createRadialGradient(cx,cy,0,cx,cy,dotR);
+    dg.addColorStop(0,state==='thinking'?`rgba(${vr+50},${vg+50},${vb+50},1)`:`rgba(${cr},${cg},${cb},1)`);
+    dg.addColorStop(1,'transparent');
+    ctx.beginPath(); ctx.arc(cx,cy,dotR,0,Math.PI*2);
+    ctx.fillStyle=dg; ctx.fill();
+  }
+}
+
+// ════════════════════════════════════════
+// MINI ORB FOR MESSAGES
+// ════════════════════════════════════════
+const miniOrbs = [];
+function createMiniOrb() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 72; canvas.height = 72;
+  canvas.className = 'mini-orb-canvas';
+  miniOrbs.push({canvas, ctx: canvas.getContext('2d')});
+  return canvas;
+}
+
+// ════════════════════════════════════════
+// VOICE ORB (large)
+// ════════════════════════════════════════
+const voiceOrbCanvas = document.getElementById('voiceOrbCanvas');
+const voiceOrbCtx = voiceOrbCanvas.getContext('2d');
+
+// ════════════════════════════════════════
+// ANIMATION LOOP
+// ════════════════════════════════════════
+function animLoop(ts) {
+  orbTime = ts;
+  // Mini orbs in messages
+  miniOrbs.forEach(o => drawOrb(o.canvas, o.ctx, 72, lumiState, ts));
+  // Voice orb
+  if (voiceModeOn) drawOrb(voiceOrbCanvas, voiceOrbCtx, 300, lumiState, ts);
+  requestAnimationFrame(animLoop);
+}
+
+// ════════════════════════════════════════
+// CLOCK + SYSTEM STATS
+// ════════════════════════════════════════
+function updateClock() {
+  const now = new Date(new Date().toLocaleString('en',{timeZone:'Asia/Bangkok'}));
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const s=String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('clock-date').textContent =
+    `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+setInterval(updateClock, 1000);
+
+let sysTargets = {cpu:42,ram:67,gpu:31};
+function randomizeSys() {
+  sysTargets.cpu = Math.max(15,Math.min(95,sysTargets.cpu+(Math.random()-0.5)*18));
+  sysTargets.ram = Math.max(40,Math.min(90,sysTargets.ram+(Math.random()-0.5)*10));
+  sysTargets.gpu = Math.max(8,Math.min(85,sysTargets.gpu+(Math.random()-0.5)*22));
+  document.getElementById('cpuBar').style.width = sysTargets.cpu+'%';
+  document.getElementById('ramBar').style.width = sysTargets.ram+'%';
+  document.getElementById('gpuBar').style.width = sysTargets.gpu+'%';
+  document.getElementById('cpuVal').textContent = Math.round(sysTargets.cpu)+'%';
+  document.getElementById('ramVal').textContent = Math.round(sysTargets.ram)+'%';
+  document.getElementById('gpuVal').textContent = Math.round(sysTargets.gpu)+'%';
+}
+setInterval(randomizeSys, 3000);
+
+// ════════════════════════════════════════
+// MESSAGES
+// ════════════════════════════════════════
+const sampleConversation = [
+  {role:'lumi', text:'สวัสดีครับ เจ 👋\nผมคือ LUMINOUS — หรือเรียกสั้นๆ ว่า Lumi ก็ได้ครับ\n\nพร้อมช่วยเหลือคุณแล้ว — จะถามอะไรก็ได้เลยครับ ทั้งภาษาไทยและอังกฤษ'},
+  {role:'je', text:'Lumi สวัสดี — วันนี้ช่วยสรุป research paper เรื่อง diffusion models ให้หน่อยได้ไหม?'},
+  {role:'lumi', text:'ได้เลยครับ เจ 🔬\n\nDiffusion Models คือ generative model ที่ทำงานโดยการ "เพิ่ม noise" ทีละนิดเข้าไปในข้อมูล (forward process) แล้วสอนโมเดลให้ "กำจัด noise" ออกทีละขั้น (reverse process)\n\nจุดเด่นที่ทำให้มันชนะ GAN คือ training stability และ output diversity ครับ อยากให้เจาะลึกส่วนไหนเป็นพิเศษไหมครับ?'},
+  {role:'je', text:'ดีมาก — แล้ว score matching กับ DDPM ต่างกันยังไง?'},
+];
+
+function addMessage(role, text, animate=true) {
+  const msgs = document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = `msg-row ${role}`;
+  if (!animate) row.style.animation = 'none';
+
+  if (role === 'lumi') {
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'lumi-avatar';
+    const oc = createMiniOrb();
+    avatarDiv.appendChild(oc);
+    row.appendChild(avatarDiv);
+  }
+
+  const bubble = document.createElement('div');
+  bubble.className = `bubble ${role}`;
+
+  const nameEl = document.createElement('div');
+  nameEl.className = `bubble-name ${role}`;
+  nameEl.textContent = role==='lumi'?'LUMINOUS':'เจ';
+  bubble.appendChild(nameEl);
+
+  const textEl = document.createElement('div');
+  textEl.style.whiteSpace = 'pre-wrap';
+  textEl.textContent = text;
+  bubble.appendChild(textEl);
+
+  row.appendChild(bubble);
+  msgs.appendChild(row);
+  msgs.scrollTop = msgs.scrollHeight;
+  messageCount++;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = 'typing-row'; row.id='typingRow';
+  const avatarDiv = document.createElement('div');
+  avatarDiv.className='lumi-avatar';
+  const oc = createMiniOrb();
+  avatarDiv.appendChild(oc);
+  row.appendChild(avatarDiv);
+  const dots = document.createElement('div');
+  dots.className = 'typing-dots';
+  dots.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  row.appendChild(dots);
+  msgs.appendChild(row);
+  msgs.scrollTop = msgs.scrollHeight;
+  return row;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typingRow');
+  if (t) t.remove();
+}
+
+function setStatus(s, label) {
+  lumiState = s;
+  const dot = document.getElementById('statusDot');
+  const lbl = document.getElementById('statusLabel');
+  const taskLbl = document.getElementById('taskLabel');
+  dot.className = 'status-dot' + (s==='thinking'?' thinking':'');
+  lbl.textContent = label||s.toUpperCase();
+  if (s==='thinking') taskLbl.textContent = 'Thinking…';
+  if (s==='idle') taskLbl.textContent = 'Chat Mode';
+}
+
+// Simulate Lumi response
+const lumiReplies = [
+  "ครับ เจ — Score Matching และ DDPM เชื่อมกันอยู่ลึกๆ ครับ\n\nDDPM (Ho et al. 2020) predict noise ε ที่ถูกเพิ่มเข้าไป ขณะที่ Score Matching สอนโมเดลให้ estimate ∇log p(x) โดยตรง — แต่ Song et al. แสดงให้เห็นว่ามันเทียบเท่ากันครับ ทั้งคู่คือ denoising score matching ต่างกันแค่ parameterization",
+  "น่าสนใจมากครับ 🔭\n\nอยากให้ผมสร้าง comparison table ระหว่าง DDPM, Score SDE, และ Flow Matching ไหมครับ? จะได้เห็น trade-off ชัดๆ",
+  "เข้าใจครับ เจ — ขอ clarify ก่อนนะครับ เพื่อให้คำตอบแม่นที่สุด",
+  "ข้อมูลดีมากครับ กำลัง process อยู่…\n\nผมพบว่ามี 3 มุมมองที่น่าสนใจในเรื่องนี้ครับ ให้อธิบายไปทีละอันได้เลยไหม?"
+];
+let replyIdx = 0;
+
+function sendMessage() {
+  const input = document.getElementById('textInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = ''; input.style.height='auto';
+  addMessage('je', text);
+  setStatus('thinking','THINKING');
+
+  const typingRow = showTyping();
+  setTimeout(() => {
+    removeTyping();
+    setStatus('speaking','SPEAKING');
+    addMessage('lumi', lumiReplies[replyIdx % lumiReplies.length]);
+    replyIdx++;
+    setTimeout(() => setStatus('idle','ONLINE'), 2200);
+  }, 1800 + Math.random()*800);
+}
+
+// ════════════════════════════════════════
+// CONTROLS
+// ════════════════════════════════════════
+function toggleHud() {
+  hudOpen = !hudOpen;
+  document.getElementById('hud').classList.toggle('collapsed', !hudOpen);
+  document.getElementById('hudToggleBtn').classList.toggle('active', hudOpen);
+}
+
+function toggleMic() {
+  micActive = !micActive;
+  document.getElementById('micBtn').classList.toggle('active', micActive);
+}
+
+function enterVoice() {
+  voiceModeOn = true;
+  lumiState = 'speaking';
+  document.getElementById('voiceMode').classList.add('active');
+  document.getElementById('voiceLabel').textContent = 'กำลังฟัง… / Listening…';
+}
+
+function exitVoice() {
+  voiceModeOn = false;
+  lumiState = 'idle';
+  document.getElementById('voiceMode').classList.remove('active');
+}
+
+function newChat() {
+  document.getElementById('messages').innerHTML='';
+  miniOrbs.length = 0;
+  messageCount = 0;
+  setTimeout(() => {
+    addMessage('lumi','บทสนทนาใหม่เริ่มต้นแล้วครับ เจ\n\nมีอะไรให้ Lumi ช่วยไหมครับ?', true);
+    setStatus('idle','ONLINE');
+  }, 200);
+}
+
+// ════════════════════════════════════════
+// TWEAKS
+// ════════════════════════════════════════
+function toggleTweaks() {
+  document.getElementById('tweaks').classList.toggle('show');
+  document.getElementById('tweakBtn').classList.toggle('active');
+}
+
+function tweak(key) {
+  const el = document.getElementById('t-'+key);
+  el.classList.toggle('on');
+  const on = el.classList.contains('on');
+  if (key==='hud') { hudOpen=on; document.getElementById('hud').classList.toggle('collapsed',!on); }
+  if (key==='scan') { document.body.style.setProperty('--scan-opacity', on?'1':'0'); if(!on){const s=document.createElement('style');s.id='noscan';s.textContent='body::after{display:none}';document.head.appendChild(s);}else{const s=document.getElementById('noscan');if(s)s.remove();} }
+  if (key==='part') { particlesOn=on; if(!on)pCtx.clearRect(0,0,pCanvas.width,pCanvas.height); }
+  window.parent.postMessage({type:'__edit_mode_set_keys',edits:{[key]:on}},'*');
+}
+
+function changeOrbStyle(v) {
+  orbStyle = v;
+  window.parent.postMessage({type:'__edit_mode_set_keys',edits:{orbStyle:v}},'*');
+}
+
+function changeAccent(v) {
+  const map = {cyan:[0,212,255], violet:[123,94,167], gold:[255,196,80]};
+  accentColor = map[v]||map.cyan;
+  const hex = {cyan:'#00d4ff',violet:'#7b5ea7',gold:'#ffc450'};
+  document.documentElement.style.setProperty('--cyan',hex[v]||hex.cyan);
+  document.documentElement.style.setProperty('--cyan-dim',`rgba(${accentColor[0]},${accentColor[1]},${accentColor[2]},0.15)`);
+  document.documentElement.style.setProperty('--border',`rgba(${accentColor[0]},${accentColor[1]},${accentColor[2]},0.18)`);
+  window.parent.postMessage({type:'__edit_mode_set_keys',edits:{accent:v}},'*');
+}
+
+// ════════════════════════════════════════
+// INPUT AUTO-RESIZE & ENTER KEY
+// ════════════════════════════════════════
+document.getElementById('textInput').addEventListener('input', function() {
+  this.style.height='auto';
+  this.style.height=Math.min(this.scrollHeight,120)+'px';
+});
+document.getElementById('textInput').addEventListener('keydown', function(e) {
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+// ════════════════════════════════════════
+// TWEAKS HOST PROTOCOL
+// ════════════════════════════════════════
+window.addEventListener('message', e => {
+  if (e.data?.type==='__activate_edit_mode') document.getElementById('tweaks').classList.add('show');
+  if (e.data?.type==='__deactivate_edit_mode') document.getElementById('tweaks').classList.remove('show');
+});
+window.parent.postMessage({type:'__edit_mode_available'},'*');
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+function initApp() {
+  updateClock();
+  randomizeSys();
+  initParticles();
+  drawParticles();
+  requestAnimationFrame(animLoop);
+  // Load sample convo
+  let delay = 0;
+  sampleConversation.forEach((m,i) => {
+    setTimeout(() => {
+      addMessage(m.role, m.text, i>0);
+      if (m.role==='lumi' && i===0) setStatus('idle','ONLINE');
+    }, delay);
+    delay += i===0?0:220;
+  });
+}
+
+// Start boot
+runBoot();
+
+window.addEventListener('resize', () => {
+  resizeParticles();
+  initParticles();
+});
+</script>
+</body>
+</html>

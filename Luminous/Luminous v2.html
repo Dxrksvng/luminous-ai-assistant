@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUMINOUS v2.0 — เจ</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0a0e1a;--navy2:#0d1224;--navy3:#111827;
+  --cyan:#00d4ff;--cyan2:rgba(0,212,255,0.15);--cyan3:rgba(0,212,255,0.08);
+  --violet:#7b5ea7;--vio2:rgba(123,94,167,0.2);
+  --gold:#ffc450;--gold2:rgba(255,196,80,0.15);
+  --green:#00e5a0;--red:#ff4d6d;--orange:#ff8c42;
+  --white:#f0f4ff;--w30:rgba(240,244,255,0.3);--w15:rgba(240,244,255,0.15);
+  --w08:rgba(240,244,255,0.08);--w04:rgba(240,244,255,0.04);
+  --border:rgba(0,212,255,0.16);--border2:rgba(240,244,255,0.07);
+  --glass:rgba(10,14,26,0.75);
+  --r:12px;--r2:8px;
+  --font-display:'Orbitron',sans-serif;
+  --font-ui:'Space Grotesk',sans-serif;
+  --font-body:'Inter',sans-serif;
+}
+html,body{width:100%;height:100%;background:var(--navy);color:var(--white);font-family:var(--font-body);overflow:hidden}
+
+/* BOOT */
+#boot{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:9999;transition:opacity .8s ease}
+#boot.out{opacity:0;pointer-events:none}
+.boot-logo{font-family:var(--font-display);font-size:12px;letter-spacing:.5em;color:rgba(0,212,255,.3);margin-bottom:52px}
+.boot-lines{font-family:var(--font-ui);font-size:13.5px;letter-spacing:.06em;color:var(--cyan);width:460px;line-height:2.1}
+.bl{display:block;opacity:0;white-space:nowrap;transition:opacity .15s}
+.bl.v{opacity:1}
+.bl.dim{color:rgba(0,212,255,.4);font-size:12px}
+.bl.acc{color:var(--white);font-weight:500}
+.bc{display:inline-block;width:8px;height:14px;background:var(--cyan);animation:bc .7s step-end infinite;vertical-align:middle;margin-left:2px}
+@keyframes bc{50%{opacity:0}}
+
+/* APP */
+#app{position:fixed;inset:0;opacity:0;transition:opacity .9s ease .2s;display:grid;grid-template-rows:56px 40px 1fr;grid-template-columns:1fr}
+#app.on{opacity:1}
+#particleCanvas{position:fixed;inset:0;pointer-events:none;z-index:0}
+
+/* TOPBAR */
+#topbar{grid-row:1;position:relative;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);background:rgba(10,14,26,.92);backdrop-filter:blur(24px)}
+.logo{font-family:var(--font-display);font-size:16px;font-weight:700;letter-spacing:.22em;color:var(--white);text-shadow:0 0 20px rgba(0,212,255,.4)}
+.logo span{color:var(--cyan)}
+.status-pill{display:flex;align-items:center;gap:7px;font-family:var(--font-ui);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(0,212,255,.65)}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:sdot 2s ease-in-out infinite}
+@keyframes sdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.sdot.think{background:var(--violet);box-shadow:0 0 8px var(--violet);animation-duration:.5s}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.tb-btn{width:32px;height:32px;border-radius:var(--r2);border:1px solid var(--border2);background:var(--w04);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--w30);font-size:13px;transition:all .2s}
+.tb-btn:hover,.tb-btn.on{background:var(--cyan2);border-color:var(--border);color:var(--cyan)}
+
+/* WAKE WORD BADGE */
+#wakeWord{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:8px;padding:5px 14px;background:rgba(123,94,167,.25);border:1px solid rgba(123,94,167,.5);border-radius:100px;font-family:var(--font-ui);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(220,200,255,.8);opacity:0;transition:opacity .4s;pointer-events:none;backdrop-filter:blur(12px)}
+#wakeWord.show{opacity:1}
+.ww-ring{width:8px;height:8px;border-radius:50%;background:var(--violet);box-shadow:0 0 10px var(--violet);animation:ww-pulse 1s ease-in-out infinite}
+@keyframes ww-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.5}}
+
+/* NAV TABS */
+#navTabs{grid-row:2;position:relative;z-index:15;display:flex;align-items:center;gap:2px;padding:0 24px;border-bottom:1px solid var(--border2);background:rgba(10,14,26,.7);backdrop-filter:blur(12px)}
+.tab{display:flex;align-items:center;gap:6px;padding:0 14px;height:40px;font-family:var(--font-ui);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--w30);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab svg{width:13px;height:13px;flex-shrink:0}
+.tab:hover{color:rgba(240,244,255,.6)}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+
+/* MAIN LAYOUT */
+#main{grid-row:3;display:flex;overflow:hidden;position:relative;z-index:1}
+
+/* SCREENS */
+.screen{flex:1;display:none;overflow:hidden}
+.screen.active{display:flex;flex-direction:column}
+
+/* HUD SIDEBAR */
+#hud{width:272px;flex-shrink:0;border-left:1px solid var(--border);background:rgba(9,13,24,.8);backdrop-filter:blur(20px);display:flex;flex-direction:column;overflow-y:auto;transition:width .4s cubic-bezier(.4,0,.2,1),opacity .4s;z-index:5}
+#hud.off{width:0;opacity:0;overflow:hidden}
+#hud::-webkit-scrollbar{width:3px}
+#hud::-webkit-scrollbar-thumb{background:var(--cyan2);border-radius:2px}
+.hs{padding:18px 18px 14px;border-bottom:1px solid var(--border2)}
+.hl{font-family:var(--font-ui);font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:rgba(0,212,255,.35);margin-bottom:12px}
+#clock{font-family:var(--font-display);font-size:34px;font-weight:700;letter-spacing:.04em;color:var(--white);text-shadow:0 0 20px rgba(0,212,255,.2);line-height:1}
+#cdate{font-family:var(--font-ui);font-size:10px;color:rgba(240,244,255,.3);letter-spacing:.08em;margin-top:5px}
+.sys-row{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.sys-lbl{font-family:var(--font-ui);font-size:9.5px;letter-spacing:.08em;color:rgba(240,244,255,.35);width:34px;flex-shrink:0}
+.sys-track{flex:1;height:2.5px;background:rgba(240,244,255,.06);border-radius:2px;overflow:hidden}
+.sys-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width 1.5s ease-in-out;position:relative}
+.sys-fill::after{content:'';position:absolute;right:-1px;top:-1px;width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 5px var(--cyan)}
+.sys-val{font-family:var(--font-ui);font-size:9.5px;color:rgba(0,212,255,.55);width:28px;text-align:right;flex-shrink:0}
+.task-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;background:var(--cyan2);border:1px solid rgba(0,212,255,.18);border-radius:100px;font-size:10.5px;letter-spacing:.05em;color:var(--cyan);font-family:var(--font-ui)}
+.tc-dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 5px var(--cyan)}
+.weather-blk{display:flex;align-items:center;gap:12px}
+.w-temp{font-family:var(--font-display);font-size:20px;font-weight:400;color:var(--white)}
+.w-desc{font-size:10.5px;color:rgba(240,244,255,.3);font-family:var(--font-ui);margin-top:2px}
+.w-city{font-size:8.5px;letter-spacing:.2em;color:rgba(0,212,255,.35);text-transform:uppercase;font-family:var(--font-ui);margin-top:2px}
+.qa-btn{display:flex;align-items:center;gap:9px;padding:8px 12px;background:var(--w04);border:1px solid var(--border2);border-radius:var(--r2);cursor:pointer;font-family:var(--font-ui);font-size:11px;color:var(--w30);transition:all .2s;margin-bottom:7px;letter-spacing:.04em}
+.qa-btn:hover{background:var(--cyan2);border-color:var(--border);color:var(--cyan)}
+.qa-btn svg{width:13px;height:13px;flex-shrink:0}
+
+/* ── CHAT SCREEN ── */
+#messages{flex:1;overflow-y:auto;padding:20px 0 0;display:flex;flex-direction:column;gap:2px}
+#messages::-webkit-scrollbar{width:3px}
+#messages::-webkit-scrollbar-thumb{background:var(--cyan2);border-radius:2px}
+.msg-row{display:flex;padding:5px 32px;animation:min 0.35s cubic-bezier(.16,1,.3,1) both}
+@keyframes min{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.msg-row.je{justify-content:flex-end}
+.msg-row.lumi{justify-content:flex-start;align-items:flex-end;gap:10px}
+.lumi-av{width:34px;height:34px;flex-shrink:0}
+.bubble{max-width:520px;padding:11px 16px;border-radius:14px;font-size:14px;line-height:1.65}
+.bubble.lumi{background:rgba(12,17,32,.85);border:1px solid rgba(0,212,255,.22);box-shadow:0 0 20px rgba(0,212,255,.06),inset 0 1px 0 rgba(0,212,255,.07);border-bottom-left-radius:3px}
+.bubble.je{background:linear-gradient(135deg,rgba(123,94,167,.3),rgba(0,212,255,.1));border:1px solid rgba(123,94,167,.35);border-bottom-right-radius:3px}
+.bname{font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;font-family:var(--font-ui);margin-bottom:4px}
+.bname.lumi{color:var(--cyan)}.bname.je{color:rgba(123,94,167,.75);text-align:right}
+.typing-row{padding:5px 32px;display:flex;align-items:flex-end;gap:10px}
+.typing-dots{display:flex;gap:5px;align-items:center;padding:11px 15px;background:rgba(12,17,32,.85);border:1px solid rgba(0,212,255,.18);border-radius:14px 14px 14px 3px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:tdot 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,80%,100%{transform:scale(.55);opacity:.35}40%{transform:scale(1);opacity:1;box-shadow:0 0 7px var(--cyan)}}
+#inputWrap{padding:14px 32px 22px}
+#inputBar{display:flex;align-items:center;gap:9px;background:var(--glass);backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:14px;padding:9px 12px 9px 16px;transition:border-color .3s,box-shadow .3s}
+#inputBar:focus-within{border-color:rgba(0,212,255,.45);box-shadow:0 0 24px rgba(0,212,255,.09)}
+#textInput{flex:1;border:none;outline:none;background:transparent;font-family:var(--font-body);font-size:13.5px;color:var(--white);resize:none;max-height:110px;min-height:20px;line-height:1.5}
+#textInput::placeholder{color:rgba(240,244,255,.22)}
+.send-btn{width:34px;height:34px;flex-shrink:0;background:linear-gradient(135deg,var(--cyan),#00aadd);border:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .2s;box-shadow:0 0 14px rgba(0,212,255,.28)}
+.send-btn:hover{transform:scale(1.08);box-shadow:0 0 22px rgba(0,212,255,.5)}
+.send-btn svg{width:14px;height:14px;fill:var(--navy)}
+.mic-btn{width:34px;height:34px;flex-shrink:0;background:var(--w04);border:1px solid var(--border2);border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--w30);font-size:14px;transition:all .2s;position:relative}
+.mic-btn:hover{background:var(--vio2);border-color:rgba(123,94,167,.4);color:var(--violet)}
+
+/* ── VOICE TRANSLATE SCREEN ── */
+.voice-screen{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:32px 40px;gap:24px;overflow-y:auto}
+.lang-pair{display:flex;align-items:center;gap:14px;background:var(--w04);border:1px solid var(--border2);border-radius:var(--r);padding:10px 20px}
+.lang-sel{background:transparent;border:none;outline:none;font-family:var(--font-ui);font-size:13px;color:var(--white);cursor:pointer;padding:2px 6px}
+.lang-sel option{background:var(--navy2)}
+.lang-arrow{color:var(--cyan);font-size:18px;opacity:.7}
+.pipeline{display:flex;align-items:center;gap:0;width:100%;max-width:780px}
+.pipe-node{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
+.pipe-icon{width:52px;height:52px;border-radius:14px;border:1px solid var(--border2);background:var(--w04);display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .4s;position:relative}
+.pipe-icon.active{border-color:var(--cyan);background:var(--cyan2);box-shadow:0 0 20px rgba(0,212,255,.2)}
+.pipe-icon.done{border-color:var(--green);background:rgba(0,229,160,.1)}
+.pipe-lbl{font-family:var(--font-ui);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--w30)}
+.pipe-arrow{width:40px;height:2px;background:var(--border2);position:relative;flex-shrink:0;margin-top:-28px}
+.pipe-arrow::after{content:'';position:absolute;right:-1px;top:-3px;width:0;height:0;border-left:6px solid rgba(240,244,255,.1);border-top:4px solid transparent;border-bottom:4px solid transparent}
+.pipe-flow{position:absolute;left:0;top:0;height:100%;width:0;background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation:none}
+.pipe-flow.running{width:100%;animation:pflow 1s ease-in-out infinite}
+@keyframes pflow{0%{opacity:0;transform:scaleX(0)}50%{opacity:1}100%{opacity:0;transform:scaleX(1)}}
+
+.big-mic{width:100px;height:100px;border-radius:50%;background:var(--w04);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:36px;transition:all .3s;position:relative}
+.big-mic:hover{background:var(--cyan2);border-color:var(--cyan)}
+.big-mic.active{background:var(--cyan2);border-color:var(--cyan);box-shadow:0 0 40px rgba(0,212,255,.25)}
+.big-mic::before{content:'';position:absolute;inset:-10px;border-radius:50%;border:1px solid var(--cyan);opacity:0;animation:none}
+.big-mic.active::before{animation:mic-ring 1.5s ease-out infinite;opacity:1}
+@keyframes mic-ring{0%{inset:-10px;opacity:.5}100%{inset:-26px;opacity:0}}
+.big-mic.active::after{content:'';position:absolute;inset:-22px;border-radius:50%;border:1px solid var(--cyan);animation:mic-ring2 1.5s ease-out infinite .4s;opacity:0}
+@keyframes mic-ring2{0%{inset:-22px;opacity:.3}100%{inset:-38px;opacity:0}}
+.mic-hint{font-family:var(--font-ui);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--w30);margin-top:-8px}
+.voice-panels{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:780px}
+.voice-panel{background:var(--w04);border:1px solid var(--border2);border-radius:var(--r);padding:16px 18px}
+.vp-label{font-family:var(--font-ui);font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(0,212,255,.4);margin-bottom:10px}
+.vp-text{font-size:14px;line-height:1.65;color:var(--w30);min-height:60px}
+.vp-text.has-content{color:var(--white)}
+.vp-lang{font-family:var(--font-ui);font-size:9px;color:var(--w30);letter-spacing:.1em;margin-top:8px}
+
+/* ── LANGUAGE LEARN SCREEN ── */
+.learn-screen{display:flex;flex-direction:column;padding:24px 36px;gap:20px;overflow-y:auto}
+.subtabs{display:flex;gap:4px;margin-bottom:4px}
+.stab{padding:7px 16px;border-radius:var(--r2);border:1px solid var(--border2);background:var(--w04);font-family:var(--font-ui);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--w30);cursor:pointer;transition:all .2s}
+.stab.on{background:var(--cyan2);border-color:var(--border);color:var(--cyan)}
+.learn-panel{background:var(--w04);border:1px solid var(--border2);border-radius:var(--r);padding:20px}
+.learn-input{width:100%;background:rgba(5,8,18,.6);border:1px solid var(--border2);border-radius:var(--r2);padding:12px 14px;font-family:var(--font-body);font-size:13.5px;color:var(--white);outline:none;resize:vertical;min-height:80px;transition:border-color .2s}
+.learn-input:focus{border-color:rgba(0,212,255,.35)}
+.learn-input::placeholder{color:rgba(240,244,255,.2)}
+.learn-btn{margin-top:10px;padding:9px 20px;background:linear-gradient(135deg,var(--cyan),#009ec0);border:none;border-radius:var(--r2);font-family:var(--font-ui);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);cursor:pointer;font-weight:600;transition:all .2s;box-shadow:0 0 14px rgba(0,212,255,.2)}
+.learn-btn:hover{box-shadow:0 0 22px rgba(0,212,255,.4);transform:translateY(-1px)}
+.learn-output{margin-top:14px;padding:14px;background:rgba(5,8,18,.5);border:1px solid var(--border2);border-radius:var(--r2);font-size:13.5px;line-height:1.7;color:var(--white);min-height:60px}
+.score-bar{display:flex;align-items:center;gap:10px;margin-top:10px}
+.score-track{flex:1;height:4px;background:var(--w08);border-radius:2px;overflow:hidden}
+.score-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--green),var(--cyan));transition:width .8s ease}
+.score-lbl{font-family:var(--font-display);font-size:13px;color:var(--green)}
+.practice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
+.pcard{background:var(--w04);border:1px solid var(--border2);border-radius:var(--r);padding:18px;cursor:pointer;transition:all .25s;text-align:center}
+.pcard:hover{background:var(--cyan2);border-color:var(--border)}
+.pcard-icon{font-size:28px;margin-bottom:8px}
+.pcard-title{font-family:var(--font-ui);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:4px}
+.pcard-desc{font-size:11.5px;color:var(--w30);line-height:1.5}
+.level-chips{display:flex;gap:6px;margin-top:10px;justify-content:center}
+.lchip{padding:3px 10px;border-radius:100px;border:1px solid var(--border2);font-family:var(--font-ui);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--w30);cursor:pointer;transition:all .2s}
+.lchip.on{background:var(--cyan2);border-color:var(--border);color:var(--cyan)}
+
+/* ── MODELS SCREEN ── */
+.models-screen{padding:28px 36px;display:flex;flex-direction:column;gap:22px;overflow-y:auto}
+.fallback-chain{display:flex;align-items:center;gap:0;padding:18px 24px;background:var(--w04);border:1px solid var(--border2);border-radius:var(--r)}
+.fc-node{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.fc-num{font-family:var(--font-display);font-size:10px;color:rgba(0,212,255,.4);letter-spacing:.1em}
+.fc-name{font-family:var(--font-ui);font-size:12px;letter-spacing:.08em;color:var(--white)}
+.fc-status{font-size:9px;font-family:var(--font-ui);letter-spacing:.08em}
+.fc-status.ok{color:var(--green)}.fc-status.off{color:var(--red)}.fc-status.warn{color:var(--orange)}
+.fc-arrow{color:var(--border);font-size:18px;flex-shrink:0;margin-top:-4px}
+.models-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.model-card{background:var(--w04);border:1px solid var(--border2);border-radius:var(--r);padding:20px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.model-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;border-radius:var(--r)}
+.model-card.active{border-color:var(--cyan);background:var(--cyan2)}
+.model-card.active::before{background:radial-gradient(ellipse at top left,rgba(0,212,255,.06),transparent);opacity:1}
+.model-card:not(.active):hover{border-color:rgba(240,244,255,.12)}
+.mc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.mc-name{font-family:var(--font-ui);font-size:13px;font-weight:600;letter-spacing:.06em;color:var(--white)}
+.mc-badge{padding:3px 9px;border-radius:100px;font-family:var(--font-ui);font-size:9px;letter-spacing:.1em;text-transform:uppercase}
+.mc-badge.primary{background:rgba(0,212,255,.2);border:1px solid rgba(0,212,255,.3);color:var(--cyan)}
+.mc-badge.fallback{background:var(--w04);border:1px solid var(--border2);color:var(--w30)}
+.mc-badge.local{background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.25);color:var(--green)}
+.mc-badge.offline{background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.2);color:var(--red)}
+.mc-stat{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.mc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.mc-dot.ok{background:var(--green);box-shadow:0 0 5px var(--green)}
+.mc-dot.warn{background:var(--orange)}
+.mc-dot.off{background:var(--red)}
+.mc-label{font-size:11.5px;color:var(--w30);flex:1;font-family:var(--font-ui)}
+.mc-val{font-size:11px;color:var(--cyan);font-family:var(--font-display)}
+.latency-bar{height:3px;background:var(--w08);border-radius:2px;margin-top:10px;overflow:hidden}
+.latency-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.latency-fill.fast{background:linear-gradient(90deg,var(--green),#00cc88)}
+.latency-fill.med{background:linear-gradient(90deg,var(--gold),#ff9f43)}
+.latency-fill.slow{background:linear-gradient(90deg,var(--orange),var(--red))}
+.mc-latency-lbl{font-family:var(--font-ui);font-size:9px;color:var(--w30);margin-top:4px;letter-spacing:.08em}
+.select-btn{width:100%;margin-top:12px;padding:7px;border:1px solid var(--border2);border-radius:var(--r2);background:transparent;font-family:var(--font-ui);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--w30);cursor:pointer;transition:all .2s}
+.select-btn:hover{background:var(--cyan2);border-color:var(--border);color:var(--cyan)}
+.model-card.active .select-btn{background:var(--cyan2);border-color:var(--border);color:var(--cyan)}
+
+/* ── SYSTEM HEALTH SCREEN ── */
+.system-screen{padding:24px 36px;display:flex;flex-direction:column;gap:18px;overflow-y:auto}
+.health-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.health-card{background:var(--w04);border:1px solid var(--border2);border-radius:var(--r);padding:16px;text-align:center}
+.hc-icon{font-size:22px;margin-bottom:8px}
+.hc-val{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--white);line-height:1}
+.hc-val.ok{color:var(--green)}.hc-val.warn{color:var(--gold)}.hc-val.err{color:var(--red)}
+.hc-lbl{font-family:var(--font-ui);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--w30);margin-top:4px}
+.endpoint-table{background:var(--w04);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden}
+.et-header{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:10px 16px;border-bottom:1px solid var(--border2);font-family:var(--font-ui);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(0,212,255,.35)}
+.et-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:11px 16px;border-bottom:1px solid var(--border2);align-items:center;transition:background .2s}
+.et-row:last-child{border-bottom:none}
+.et-row:hover{background:var(--w04)}
+.et-endpoint{font-family:'JetBrains Mono','Courier New',monospace;font-size:12px;color:var(--white)}
+.et-method{font-family:var(--font-ui);font-size:9px;letter-spacing:.08em;padding:2px 7px;border-radius:4px}
+.et-method.post{background:rgba(0,212,255,.12);color:var(--cyan)}
+.et-method.ws{background:rgba(123,94,167,.2);color:var(--violet)}
+.et-status{display:flex;align-items:center;gap:5px;font-family:var(--font-ui);font-size:10px}
+.es-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.es-dot.ok{background:var(--green);box-shadow:0 0 5px var(--green)}
+.es-dot.warn{background:var(--gold)}.es-dot.err{background:var(--red)}
+.et-ms{font-family:var(--font-display);font-size:11px;color:rgba(0,212,255,.6)}
+.spark-container{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.spark-card{background:var(--w04);border:1px solid var(--border2);border-radius:var(--r);padding:14px 16px}
+.spark-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.spark-title{font-family:var(--font-ui);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--w30)}
+.spark-val{font-family:var(--font-display);font-size:13px;color:var(--cyan)}
+.spark-canvas{width:100%;height:44px}
+
+/* ── SETTINGS SCREEN ── */
+.settings-screen{padding:24px 36px;display:flex;flex-direction:column;gap:18px;overflow-y:auto}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.setting-card{background:var(--w04);border:1px solid var(--border2);border-radius:var(--r);padding:20px}
+.sc-title{font-family:var(--font-ui);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(0,212,255,.4);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.sc-title span{font-size:14px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.setting-row:last-child{margin-bottom:0}
+.sr-label{font-size:12.5px;color:var(--w30);font-family:var(--font-ui)}
+.sr-sub{font-size:10px;color:rgba(240,244,255,.2);font-family:var(--font-ui);margin-top:1px}
+.sel{background:rgba(5,8,18,.8);border:1px solid var(--border);border-radius:var(--r2);padding:6px 10px;font-family:var(--font-ui);font-size:11.5px;color:var(--white);outline:none;cursor:pointer;transition:border-color .2s;-webkit-appearance:none;min-width:130px}
+.sel:focus{border-color:rgba(0,212,255,.4)}
+.sel option{background:var(--navy2)}
+.toggle{width:38px;height:22px;border-radius:11px;background:rgba(240,244,255,.08);border:1px solid rgba(240,244,255,.1);position:relative;cursor:pointer;transition:all .2s;flex-shrink:0}
+.toggle.on{background:rgba(0,212,255,.28);border-color:var(--cyan)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:rgba(240,244,255,.4);transition:all .2s}
+.toggle.on::after{left:19px;background:var(--cyan)}
+.ww-config{margin-top:8px}
+.ww-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--border2);border-radius:100px;font-family:var(--font-ui);font-size:10px;color:var(--w30);margin:3px;cursor:pointer;transition:all .2s}
+.ww-chip.on{background:var(--vio2);border-color:rgba(123,94,167,.4);color:var(--violet)}
+.hotkey-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border2)}
+.hotkey-row:last-child{border-bottom:none}
+.hk-action{font-size:12px;color:var(--w30);font-family:var(--font-ui)}
+.hk-key{display:flex;gap:4px}
+.key{padding:3px 8px;background:var(--w08);border:1px solid var(--border2);border-radius:4px;font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:rgba(240,244,255,.6)}
+
+/* TWEAKS */
+#tweaks{position:fixed;bottom:24px;right:20px;width:210px;background:rgba(9,13,24,.95);border:1px solid var(--border);border-radius:14px;padding:14px;backdrop-filter:blur(20px);z-index:100;display:none}
+#tweaks.show{display:block;animation:panel-in .2s cubic-bezier(.16,1,.3,1)}
+@keyframes panel-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.tweaks-title{font-family:var(--font-ui);font-size:8.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px}
+.tweak-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.tweak-label{font-size:10.5px;color:var(--w30);font-family:var(--font-ui)}
+.tweak-sel{background:var(--w08);border:1px solid var(--border2);border-radius:5px;padding:3px 7px;font-size:10px;color:var(--cyan);font-family:var(--font-ui);cursor:pointer;outline:none;-webkit-appearance:none}
+.tweak-sel option{background:var(--navy)}
+
+/* SCAN LINE */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,212,255,.01) 3px,rgba(0,212,255,.01) 4px);z-index:9998}
+</style>
+</head>
+<body>
+
+<!-- BOOT -->
+<div id="boot">
+  <div class="boot-logo">LUMINOUS SYSTEM v2.0</div>
+  <div class="boot-lines" id="bootLines"></div>
+</div>
+
+<!-- PARTICLES -->
+<canvas id="particleCanvas"></canvas>
+
+<!-- WAKE WORD BADGE -->
+<div id="wakeWord"><div class="ww-ring"></div><span id="wwText">Hey Luminas — Detected</span></div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="logo">LUMI<span>N</span>OUS <span style="font-size:10px;opacity:.4;letter-spacing:.1em">v2.0</span></div>
+    <div class="status-pill"><div class="sdot" id="sdot"></div><span id="slbl">ONLINE</span></div>
+    <div class="topbar-right">
+      <div class="tb-btn on" id="hudBtn" onclick="toggleHud()" title="HUD">
+        <svg width="13" height="11" viewBox="0 0 13 11" fill="currentColor"><rect width="13" height="1.5" rx=".75"/><rect y="4.75" width="9" height="1.5" rx=".75"/><rect y="9.5" width="11" height="1.5" rx=".75"/></svg>
+      </div>
+      <div class="tb-btn" id="tweakBtn" onclick="toggleTweaks()">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="2.5" cy="6.5" r="1.3"/><circle cx="6.5" cy="2.5" r="1.3"/><circle cx="10.5" cy="10" r="1.3"/><line x1="3.8" y1="6.5" x2="13" y2="6.5"/><line x1="0" y1="6.5" x2="1.2" y2="6.5"/><line x1="7.8" y1="2.5" x2="13" y2="2.5"/><line x1="0" y1="2.5" x2="5.2" y2="2.5"/><line x1="11.8" y1="10" x2="13" y2="10"/><line x1="0" y1="10" x2="9.2" y2="10"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV TABS -->
+  <div id="navTabs">
+    <div class="tab active" onclick="gotoTab('chat')" data-tab="chat">
+      <svg viewBox="0 0 14 14" fill="currentColor"><path d="M7 0a7 7 0 00-6.3 10L.1 13.4a.5.5 0 00.5.6l3.4-.6A7 7 0 107 0z"/></svg>Chat
+    </div>
+    <div class="tab" onclick="gotoTab('voice')" data-tab="voice">
+      <svg viewBox="0 0 13 14" fill="currentColor"><path d="M6.5 0C5.12 0 4 1.12 4 2.5v5C4 8.88 5.12 10 6.5 10S9 8.88 9 7.5v-5C9 1.12 7.88 0 6.5 0zM1.5 6.5A.5.5 0 001 7c0 3.04 2.35 5.5 5.5 5.5S12 10.04 12 7a.5.5 0 00-1 0c0 2.49-1.93 4.5-4.5 4.5S2 9.49 2 7a.5.5 0 00-.5-.5z"/></svg>Voice Translate
+    </div>
+    <div class="tab" onclick="gotoTab('learn')" data-tab="learn">
+      <svg viewBox="0 0 14 14" fill="currentColor"><path d="M7 0L0 4l7 4 7-4-7-4zM0 9l7 4 7-4M0 6.5l7 4 7-4"/></svg>Language
+    </div>
+    <div class="tab" onclick="gotoTab('models')" data-tab="models">
+      <svg viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="7" r="2.5"/><path d="M7 0v2M7 12v2M0 7h2M12 7h2M2.1 2.1l1.4 1.4M10.5 10.5l1.4 1.4M11.9 2.1l-1.4 1.4M3.5 10.5l-1.4 1.4"/></svg>Models
+    </div>
+    <div class="tab" onclick="gotoTab('system')" data-tab="system">
+      <svg viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="0" width="14" height="10" rx="2"/><path d="M4 12h6M7 10v2"/></svg>System
+    </div>
+    <div class="tab" onclick="gotoTab('settings')" data-tab="settings">
+      <svg viewBox="0 0 14 14" fill="currentColor"><path d="M5.5 0l-.7 2.1A5 5 0 003 3.3L.9 2.6 0 4.4l1.7 1.5v1.2L0 8.6l.9 1.8L3 9.7a5 5 0 001.8 1.2L5.5 13h3l.7-2.1A5 5 0 0011 9.7l2.1.7.9-1.8-1.7-1.5V5.9L14 4.4l-.9-1.8L11 3.3A5 5 0 009.2 2.1L8.5 0h-3zm1.5 5a2 2 0 110 4 2 2 0 010-4z"/></svg>Settings
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- CHAT SCREEN -->
+    <div class="screen active" id="screen-chat">
+      <div id="messages"></div>
+      <div id="inputWrap">
+        <div id="inputBar">
+          <textarea id="textInput" rows="1" placeholder="พิมพ์ข้อความ… / Message Lumi…"></textarea>
+          <div class="mic-btn" onclick="toggleMic()">🎤</div>
+          <button class="send-btn" onclick="sendMessage()">
+            <svg viewBox="0 0 16 16"><path d="M15.7 7.3l-14-6a.5.5 0 00-.65.65l2.5 5.55-2.5 5.55a.5.5 0 00.65.65l14-6a.5.5 0 000-.9z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VOICE TRANSLATE SCREEN -->
+    <div class="screen" id="screen-voice">
+      <div class="voice-screen">
+        <div style="text-align:center">
+          <div style="font-family:var(--font-display);font-size:11px;letter-spacing:.3em;color:rgba(0,212,255,.4);margin-bottom:6px;text-transform:uppercase">Voice Translation</div>
+          <div style="font-size:13px;color:var(--w30);font-family:var(--font-ui)">Speech → AI → Output — พูดแล้วแปลทันที</div>
+        </div>
+        <!-- Lang pair -->
+        <div class="lang-pair">
+          <select class="lang-sel" id="srcLang"><option value="th">🇹🇭 Thai</option><option value="en">🇺🇸 English</option><option value="ja">🇯🇵 Japanese</option><option value="zh">🇨🇳 Chinese</option></select>
+          <div class="lang-arrow">⇌</div>
+          <select class="lang-sel" id="tgtLang"><option value="en">🇺🇸 English</option><option value="th">🇹🇭 Thai</option><option value="ja">🇯🇵 Japanese</option><option value="zh">🇨🇳 Chinese</option></select>
+          <div style="width:1px;height:20px;background:var(--border2);margin:0 6px"></div>
+          <div id="autoMode" class="toggle on" onclick="toggleEl(this)" style="margin-right:4px"></div>
+          <span style="font-family:var(--font-ui);font-size:11px;color:var(--w30)">Auto</span>
+        </div>
+        <!-- Pipeline -->
+        <div class="pipeline" id="pipeline">
+          <div class="pipe-node"><div class="pipe-icon" id="pn0">🎤<div class="pipe-flow" id="pf0"></div></div><div class="pipe-lbl">Microphone</div></div>
+          <div class="pipe-arrow"><div class="pipe-flow" id="pfa0"></div></div>
+          <div class="pipe-node"><div class="pipe-icon" id="pn1">🔊<div class="pipe-flow" id="pf1"></div></div><div class="pipe-lbl">Whisper STT</div></div>
+          <div class="pipe-arrow"><div class="pipe-flow" id="pfa1"></div></div>
+          <div class="pipe-node"><div class="pipe-icon" id="pn2">🧠<div class="pipe-flow" id="pf2"></div></div><div class="pipe-lbl">Claude AI</div></div>
+          <div class="pipe-arrow"><div class="pipe-flow" id="pfa2"></div></div>
+          <div class="pipe-node"><div class="pipe-icon" id="pn3">🗣<div class="pipe-flow" id="pf3"></div></div><div class="pipe-lbl">Edge TTS</div></div>
+          <div class="pipe-arrow"><div class="pipe-flow" id="pfa3"></div></div>
+          <div class="pipe-node"><div class="pipe-icon" id="pn4">📢</div><div class="pipe-lbl">Output</div></div>
+        </div>
+        <!-- Mic -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+          <div class="big-mic" id="bigMic" onclick="toggleVoiceRec()">🎤</div>
+          <div class="mic-hint" id="micHint">กดเพื่อเริ่ม / Tap to speak</div>
+        </div>
+        <!-- Output panels -->
+        <div class="voice-panels">
+          <div class="voice-panel">
+            <div class="vp-label">🎙 Transcript (Original)</div>
+            <div class="vp-text" id="vTranscript">Waiting for speech…</div>
+            <div class="vp-lang" id="vLangSrc">Source: Thai</div>
+          </div>
+          <div class="voice-panel">
+            <div class="vp-label">✨ Translation (Output)</div>
+            <div class="vp-text" id="vTranslation">Translation will appear here…</div>
+            <div class="vp-lang" id="vLangTgt">Target: English</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LANGUAGE LEARN SCREEN -->
+    <div class="screen" id="screen-learn">
+      <div class="learn-screen">
+        <div>
+          <div style="font-family:var(--font-display);font-size:11px;letter-spacing:.3em;color:rgba(0,212,255,.4);margin-bottom:12px;text-transform:uppercase">Language Learning</div>
+          <div class="subtabs">
+            <div class="stab on" onclick="setLearnTab(0,this)">Translation</div>
+            <div class="stab" onclick="setLearnTab(1,this)">Grammar Check</div>
+            <div class="stab" onclick="setLearnTab(2,this)">Practice</div>
+            <div class="stab" onclick="setLearnTab(3,this)">Summarize</div>
+          </div>
+        </div>
+        <!-- Translation -->
+        <div class="learn-panel" id="lt0">
+          <div style="font-family:var(--font-ui);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(0,212,255,.35);margin-bottom:10px">Thai ↔ English Translation</div>
+          <textarea class="learn-input" id="transInput" placeholder="พิมพ์ข้อความที่ต้องการแปล… / Enter text to translate…" rows="3"></textarea>
+          <button class="learn-btn" onclick="doTranslate()">แปลภาษา / Translate</button>
+          <div class="learn-output" id="transOutput" style="display:none"></div>
+        </div>
+        <!-- Grammar -->
+        <div class="learn-panel" id="lt1" style="display:none">
+          <div style="font-family:var(--font-ui);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(0,212,255,.35);margin-bottom:10px">Grammar Check — English</div>
+          <textarea class="learn-input" id="gramInput" placeholder="Enter an English sentence to check grammar…" rows="3"></textarea>
+          <button class="learn-btn" onclick="doGrammar()">Check Grammar</button>
+          <div class="learn-output" id="gramOutput" style="display:none"></div>
+          <div class="score-bar" id="scoreBar" style="display:none">
+            <div style="font-family:var(--font-ui);font-size:10px;color:var(--w30)">Score</div>
+            <div class="score-track"><div class="score-fill" id="scoreFill"></div></div>
+            <div class="score-lbl" id="scoreLbl"></div>
+          </div>
+        </div>
+        <!-- Practice -->
+        <div id="lt2" style="display:none">
+          <div style="font-family:var(--font-ui);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(0,212,255,.35);margin-bottom:14px">Practice Mode — เลือกทักษะ</div>
+          <div class="practice-grid">
+            <div class="pcard" onclick="startPractice('listening')"><div class="pcard-icon">👂</div><div class="pcard-title">Listening</div><div class="pcard-desc">ฝึกฟังเสียงภาษาอังกฤษ</div><div class="level-chips"><div class="lchip on">Beginner</div><div class="lchip">Inter</div><div class="lchip">Advanced</div></div></div>
+            <div class="pcard" onclick="startPractice('speaking')"><div class="pcard-icon">🗣</div><div class="pcard-title">Speaking</div><div class="pcard-desc">ฝึกออกเสียงและสำเนียง</div><div class="level-chips"><div class="lchip on">Beginner</div><div class="lchip">Inter</div><div class="lchip">Advanced</div></div></div>
+            <div class="pcard" onclick="startPractice('reading')"><div class="pcard-icon">📖</div><div class="pcard-title">Reading</div><div class="pcard-desc">ฝึกอ่านและเข้าใจ</div><div class="level-chips"><div class="lchip on">Beginner</div><div class="lchip">Inter</div><div class="lchip">Advanced</div></div></div>
+            <div class="pcard" onclick="startPractice('writing')"><div class="pcard-icon">✍️</div><div class="pcard-title">Writing</div><div class="pcard-desc">ฝึกเขียนประโยค</div><div class="level-chips"><div class="lchip on">Beginner</div><div class="lchip">Inter</div><div class="lchip">Advanced</div></div></div>
+          </div>
+        </div>
+        <!-- Summarize -->
+        <div class="learn-panel" id="lt3" style="display:none">
+          <div style="font-family:var(--font-ui);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(0,212,255,.35);margin-bottom:10px">Summarize Content</div>
+          <div style="display:flex;gap:6px;margin-bottom:10px">
+            <div class="lchip on" onclick="setSumLevel('brief',this)">Brief</div>
+            <div class="lchip" onclick="setSumLevel('detailed',this)">Detailed</div>
+            <div class="lchip" onclick="setSumLevel('comprehensive',this)">Comprehensive</div>
+          </div>
+          <textarea class="learn-input" id="sumInput" placeholder="วางข้อความที่ต้องการสรุป… / Paste text to summarize…" rows="4"></textarea>
+          <button class="learn-btn" onclick="doSummarize()">สรุปเนื้อหา / Summarize</button>
+          <div class="learn-output" id="sumOutput" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODELS SCREEN -->
+    <div class="screen" id="screen-models">
+      <div class="models-screen">
+        <div>
+          <div style="font-family:var(--font-display);font-size:11px;letter-spacing:.3em;color:rgba(0,212,255,.4);margin-bottom:6px;text-transform:uppercase">AI Model Management</div>
+          <div style="font-size:12.5px;color:var(--w30);font-family:var(--font-ui)">Automatic fallback chain — Lumi selects the best available model</div>
+        </div>
+        <!-- Fallback chain -->
+        <div class="fallback-chain">
+          <div class="fc-node"><div class="fc-num">01</div><div class="fc-name">Claude</div><div class="fc-status ok">● PRIMARY</div></div>
+          <div class="fc-arrow">→</div>
+          <div class="fc-node"><div class="fc-num">02</div><div class="fc-name">GPT-4o</div><div class="fc-status warn">● FALLBACK</div></div>
+          <div class="fc-arrow">→</div>
+          <div class="fc-node"><div class="fc-num">03</div><div class="fc-name">Ollama</div><div class="fc-status ok">● LOCAL</div></div>
+          <div class="fc-arrow">→</div>
+          <div class="fc-node"><div class="fc-num">04</div><div class="fc-name">Web Search</div><div class="fc-status warn">● FALLBACK</div></div>
+        </div>
+        <!-- Model cards -->
+        <div class="models-grid">
+          <div class="model-card active" id="mc-claude">
+            <div class="mc-header"><div class="mc-name">Claude Sonnet 4.5</div><div class="mc-badge primary">Primary</div></div>
+            <div class="mc-stat"><div class="mc-dot ok"></div><div class="mc-label">API Status</div><div class="mc-val">OK</div></div>
+            <div class="mc-stat"><div class="mc-dot ok"></div><div class="mc-label">Thai Support</div><div class="mc-val">Excellent</div></div>
+            <div class="mc-stat"><div class="mc-dot ok"></div><div class="mc-label">Context Window</div><div class="mc-val">200K</div></div>
+            <div class="latency-bar"><div class="latency-fill fast" style="width:30%"></div></div>
+            <div class="mc-latency-lbl">Avg. latency: ~1.2s</div>
+            <button class="select-btn">✓ Active Model</button>
+          </div>
+          <div class="model-card" id="mc-gpt">
+            <div class="mc-header"><div class="mc-name">GPT-4o</div><div class="mc-badge fallback">Fallback</div></div>
+            <div class="mc-stat"><div class="mc-dot ok"></div><div class="mc-label">API Status</div><div class="mc-val">OK</div></div>
+            <div class="mc-stat"><div class="mc-dot warn"></div><div class="mc-label">Thai Support</div><div class="mc-val">Good</div></div>
+            <div class="mc-stat"><div class="mc-dot ok"></div><div class="mc-label">Context Window</div><div class="mc-val">128K</div></div>
+            <div class="latency-bar"><div class="latency-fill med" style="width:50%"></div></div>
+            <div class="mc-latency-lbl">Avg. latency: ~1.8s</div>
+            <button class="select-btn" onclick="selectModel('gpt')">Switch to GPT-4o</button>
+          </div>
+          <div class="model-card" id="mc-ollama">
+            <div class="mc-header"><div class="mc-name">Ollama — Qwen2.5:7b</div><div class="mc-badge local">Local</div></div>
+            <div class="mc-stat"><div class="mc-dot ok"></div><div class="mc-label">Ollama Service</div><div class="mc-val">Running</div></div>
+            <div class="mc-stat"><div class="mc-dot ok"></div><div class="mc-label">Thai Support</div><div class="mc-val">Good</div></div>
+            <div class="mc-stat"><div class="mc-dot ok"></div><div class="mc-label">Offline Mode</div><div class="mc-val">Yes</div></div>
+            <div class="latency-bar"><div class="latency-fill med" style="width:60%"></div></div>
+            <div class="mc-latency-lbl">Avg. latency: ~2.4s (GPU)</div>
+            <button class="select-btn" onclick="selectModel('ollama')">Switch to Ollama</button>
+          </div>
+          <div class="model-card" id="mc-web">
+            <div class="mc-header"><div class="mc-name">Web Search</div><div class="mc-badge fallback">Fallback</div></div>
+            <div class="mc-stat"><div class="mc-dot ok"></div><div class="mc-label">DuckDuckGo</div><div class="mc-val">Online</div></div>
+            <div class="mc-stat"><div class="mc-dot warn"></div><div class="mc-label">AI Capability</div><div class="mc-val">Limited</div></div>
+            <div class="mc-stat"><div class="mc-dot ok"></div><div class="mc-label">Real-time Data</div><div class="mc-val">Yes</div></div>
+            <div class="latency-bar"><div class="latency-fill slow" style="width:75%"></div></div>
+            <div class="mc-latency-lbl">Avg. latency: ~3.2s</div>
+            <button class="select-btn" onclick="selectModel('web')">Use Web Search</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SYSTEM HEALTH SCREEN -->
+    <div class="screen" id="screen-system">
+      <div class="system-screen">
+        <div><div style="font-family:var(--font-display);font-size:11px;letter-spacing:.3em;color:rgba(0,212,255,.4);margin-bottom:4px;text-transform:uppercase">System Health Monitor</div>
+        <div style="font-size:12.5px;color:var(--w30);font-family:var(--font-ui)">localhost:8000 — FastAPI backend status</div></div>
+        <!-- Stats tiles -->
+        <div class="health-grid">
+          <div class="health-card"><div class="hc-icon">🟢</div><div class="hc-val ok" id="hc-uptime">99.8%</div><div class="hc-lbl">Uptime</div></div>
+          <div class="health-card"><div class="hc-icon">⚡</div><div class="hc-val" id="hc-latency">142<span style="font-size:12px">ms</span></div><div class="hc-lbl">API Latency</div></div>
+          <div class="health-card"><div class="hc-icon">📨</div><div class="hc-val" id="hc-req">1,284</div><div class="hc-lbl">Requests</div></div>
+          <div class="health-card"><div class="hc-icon">🧠</div><div class="hc-val ok" id="hc-model">Claude</div><div class="hc-lbl">Active Model</div></div>
+        </div>
+        <!-- Endpoint table -->
+        <div class="endpoint-table">
+          <div class="et-header"><div>Endpoint</div><div>Method</div><div>Status</div><div>Latency</div></div>
+          <div class="et-row"><div class="et-endpoint">/api/chat</div><div><span class="et-method post">POST</span></div><div class="et-status"><div class="es-dot ok"></div>200 OK</div><div class="et-ms" id="lat-chat">89ms</div></div>
+          <div class="et-row"><div class="et-endpoint">/api/voice/stt</div><div><span class="et-method post">POST</span></div><div class="et-status"><div class="es-dot ok"></div>200 OK</div><div class="et-ms" id="lat-stt">214ms</div></div>
+          <div class="et-row"><div class="et-endpoint">/api/voice/tts</div><div><span class="et-method post">POST</span></div><div class="et-status"><div class="es-dot ok"></div>200 OK</div><div class="et-ms" id="lat-tts">178ms</div></div>
+          <div class="et-row"><div class="et-endpoint">/api/language/translate</div><div><span class="et-method post">POST</span></div><div class="et-status"><div class="es-dot ok"></div>200 OK</div><div class="et-ms" id="lat-trans">312ms</div></div>
+          <div class="et-row"><div class="et-endpoint">/api/language/grammar</div><div><span class="et-method post">POST</span></div><div class="et-status"><div class="es-dot ok"></div>200 OK</div><div class="et-ms" id="lat-gram">267ms</div></div>
+          <div class="et-row"><div class="et-endpoint">/ws/realtime</div><div><span class="et-method ws">WS</span></div><div class="et-status"><div class="es-dot ok"></div>Connected</div><div class="et-ms">—</div></div>
+        </div>
+        <!-- Sparklines -->
+        <div class="spark-container">
+          <div class="spark-card"><div class="spark-header"><div class="spark-title">API Response Time</div><div class="spark-val" id="sv1">142ms</div></div><canvas class="spark-canvas" id="spark1"></canvas></div>
+          <div class="spark-card"><div class="spark-header"><div class="spark-title">Requests / min</div><div class="spark-val" id="sv2">24 rpm</div></div><canvas class="spark-canvas" id="spark2"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS SCREEN -->
+    <div class="screen" id="screen-settings">
+      <div class="settings-screen">
+        <div><div style="font-family:var(--font-display);font-size:11px;letter-spacing:.3em;color:rgba(0,212,255,.4);margin-bottom:4px;text-transform:uppercase">System Settings</div></div>
+        <div class="settings-grid">
+          <!-- Voice -->
+          <div class="setting-card">
+            <div class="sc-title"><span>🎙</span>Voice Settings</div>
+            <div class="setting-row">
+              <div><div class="sr-label">STT Engine</div><div class="sr-sub">Speech to Text</div></div>
+              <select class="sel"><option>Faster-Whisper</option><option>Whisper</option><option>SpeechRecognition</option></select>
+            </div>
+            <div class="setting-row">
+              <div><div class="sr-label">TTS Engine</div><div class="sr-sub">Text to Speech</div></div>
+              <select class="sel"><option>Edge-TTS</option><option>Coqui TTS</option><option>pyttsx3</option></select>
+            </div>
+            <div class="setting-row">
+              <div><div class="sr-label">TTS Voice</div><div class="sr-sub">Thai: Niwat / Premwadee</div></div>
+              <select class="sel"><option>Niwat (Male)</option><option>Premwadee (Female)</option><option>Guy (EN Male)</option><option>Jenny (EN Female)</option></select>
+            </div>
+            <div class="setting-row">
+              <div><div class="sr-label">Auto-speak replies</div></div>
+              <div class="toggle on" onclick="toggleEl(this)"></div>
+            </div>
+          </div>
+          <!-- Language -->
+          <div class="setting-card">
+            <div class="sc-title"><span>🌐</span>Language Settings</div>
+            <div class="setting-row">
+              <div><div class="sr-label">Interface Language</div></div>
+              <select class="sel"><option>ไทย / English</option><option>English only</option><option>ภาษาไทย only</option></select>
+            </div>
+            <div class="setting-row">
+              <div><div class="sr-label">Default translate to</div></div>
+              <select class="sel"><option>English</option><option>Thai</option><option>Japanese</option></select>
+            </div>
+            <div class="setting-row">
+              <div><div class="sr-label">Auto-detect language</div></div>
+              <div class="toggle on" onclick="toggleEl(this)"></div>
+            </div>
+            <div class="setting-row">
+              <div><div class="sr-label">Phonetic guide (TH)</div></div>
+              <div class="toggle on" onclick="toggleEl(this)"></div>
+            </div>
+          </div>
+          <!-- Wake Word -->
+          <div class="setting-card">
+            <div class="sc-title"><span>👂</span>Wake Word Detection</div>
+            <div class="setting-row">
+              <div><div class="sr-label">Wake Word Active</div></div>
+              <div class="toggle on" id="wwToggle" onclick="toggleEl(this)"></div>
+            </div>
+            <div class="setting-row">
+              <div><div class="sr-label">Background listening</div></div>
+              <div class="toggle on" onclick="toggleEl(this)"></div>
+            </div>
+            <div style="font-family:var(--font-ui);font-size:9.5px;letter-spacing:.1em;color:rgba(0,212,255,.35);margin-bottom:8px;text-transform:uppercase">Recognized words</div>
+            <div class="ww-config">
+              <div class="ww-chip on">"Hey Luminas"</div>
+              <div class="ww-chip on">"ลูมินัส"</div>
+              <div class="ww-chip on">"Luminas"</div>
+              <div class="ww-chip">"Hey ลูมินัส"</div>
+            </div>
+          </div>
+          <!-- Hotkeys -->
+          <div class="setting-card">
+            <div class="sc-title"><span>⌨️</span>Keyboard Shortcuts</div>
+            <div class="hotkey-row"><div class="hk-action">Toggle listening</div><div class="hk-key"><div class="key">Ctrl</div><div class="key">L</div></div></div>
+            <div class="hotkey-row"><div class="hk-action">Quick activate</div><div class="hk-key"><div class="key">Ctrl</div><div class="key">Space</div></div></div>
+            <div class="hotkey-row"><div class="hk-action">Voice mode</div><div class="hk-key"><div class="key">Ctrl</div><div class="key">V</div></div></div>
+            <div class="hotkey-row"><div class="hk-action">New chat</div><div class="hk-key"><div class="key">Ctrl</div><div class="key">N</div></div></div>
+            <div class="hotkey-row"><div class="hk-action">Send message</div><div class="hk-key"><div class="key">Enter</div></div></div>
+          </div>
+          <!-- AI -->
+          <div class="setting-card" style="grid-column:1/-1">
+            <div class="sc-title"><span>🧠</span>AI Configuration</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+              <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:0">
+                <div class="sr-label">Primary Model</div>
+                <select class="sel" style="width:100%"><option>Claude Sonnet 4.5</option><option>Claude Haiku</option><option>GPT-4o</option></select>
+              </div>
+              <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:0">
+                <div class="sr-label">Fallback Model</div>
+                <select class="sel" style="width:100%"><option>GPT-4o</option><option>Ollama</option><option>None</option></select>
+              </div>
+              <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:0">
+                <div class="sr-label">Local Model (Ollama)</div>
+                <select class="sel" style="width:100%"><option>qwen2.5:7b</option><option>llama3.2</option><option>typhoon</option></select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div class="hs"><div class="hl">System Time — Bangkok</div><div id="clock">00:00:00</div><div id="cdate"></div></div>
+      <div class="hs"><div class="hl">Resources</div>
+        <div class="sys-row"><span class="sys-lbl">CPU</span><div class="sys-track"><div class="sys-fill" id="cpuBar" style="width:0"></div></div><span class="sys-val" id="cpuVal">0%</span></div>
+        <div class="sys-row"><span class="sys-lbl">RAM</span><div class="sys-track"><div class="sys-fill" id="ramBar" style="width:0"></div></div><span class="sys-val" id="ramVal">0%</span></div>
+        <div class="sys-row"><span class="sys-lbl">GPU</span><div class="sys-track"><div class="sys-fill" id="gpuBar" style="width:0"></div></div><span class="sys-val" id="gpuVal">0%</span></div>
+      </div>
+      <div class="hs"><div class="hl">Mode</div><div class="task-chip"><div class="tc-dot"></div><span id="taskLbl">Chat Mode</span></div></div>
+      <div class="hs"><div class="hl">Weather — กรุงเทพฯ</div><div class="weather-blk"><div style="font-size:26px">🌤</div><div><div class="w-temp">33°C</div><div class="w-desc">Partly cloudy</div><div class="w-city">Bangkok · ICT +7</div></div></div></div>
+      <div class="hs"><div class="hl">Quick Actions</div>
+        <div class="qa-btn" onclick="gotoTab('chat');newChat()"><svg viewBox="0 0 14 14" fill="currentColor"><path d="M7 0a7 7 0 100 14A7 7 0 007 0zm1 8H8v1a1 1 0 11-2 0V8H5a1 1 0 110-2h1V5a1 1 0 112 0v1h1a1 1 0 110 2z"/></svg>New Chat</div>
+        <div class="qa-btn" onclick="gotoTab('voice')"><svg viewBox="0 0 13 14" fill="currentColor"><path d="M6.5 0C5.12 0 4 1.12 4 2.5v5C4 8.88 5.12 10 6.5 10s2.5-1.12 2.5-2.5v-5C9.5 1.12 8.38 0 6.5 0zM1 7c0 3.31 2.69 6 6 6s6-2.69 6-6H11c0 2.21-1.79 4-4 4S3 9.21 3 7H1z"/></svg>Voice Translate</div>
+        <div class="qa-btn" onclick="gotoTab('models')"><svg viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="7" r="2.5"/><path d="M7 0v2M7 12v2M0 7h2M12 7h2"/></svg>Switch Model</div>
+        <div class="qa-btn" onclick="gotoTab('system')"><svg viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="0" width="14" height="10" rx="2"/><path d="M4 12h6M7 10v2"/></svg>System Status</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TWEAKS -->
+<div id="tweaks">
+  <div class="tweaks-title">Tweaks</div>
+  <div class="tweak-row"><span class="tweak-label">HUD Sidebar</span><div class="toggle on" id="t-hud" onclick="tweak('hud')"></div></div>
+  <div class="tweak-row"><span class="tweak-label">Particles</span><div class="toggle on" id="t-part" onclick="tweak('part')"></div></div>
+  <div class="tweak-row"><span class="tweak-label">Scanlines</span><div class="toggle on" id="t-scan" onclick="tweak('scan')"></div></div>
+  <div class="tweak-row">
+    <span class="tweak-label">Accent</span>
+    <select class="tweak-sel" onchange="setAccent(this.value)"><option value="cyan">Cyan</option><option value="violet">Violet</option><option value="gold" selected>Gold</option><option value="green">Green</option></select>
+  </div>
+  <div class="tweak-row">
+    <span class="tweak-label">Orb Style</span>
+    <select class="tweak-sel" onchange="setOrbStyle(this.value)"><option value="orb">Orb</option><option value="hex">Hex</option><option value="ring">Rings</option></select>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// GLOBALS
+// ══════════════════════════════════════
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{"hud":true,"particles":true,"scanlines":true,"accent":"cyan","orbStyle":"orb"}/*EDITMODE-END*/;
+let hudOpen=true, particlesOn=true;
+let accentRGB=[0,212,255];
+let orbStyle='orb';
+let lumiState='idle';
+let currentTab='chat';
+let activeModel='claude';
+let voiceRecording=false;
+let miniOrbs=[];
+let sumLevel='brief';
+
+// ══════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════
+const bootData=[
+  {t:'LUMINOUS v2.0 — Personal AI System',cls:'',d:0},
+  {t:'Owner: เจ (Je) — Thai AI Engineer',cls:'dim',d:500},
+  {t:'',cls:'',d:750},
+  {t:'[INIT] Neural core........... OK',cls:'dim',d:900},
+  {t:'[INIT] Thai language module.. OK',cls:'dim',d:1200},
+  {t:'[INIT] Voice engine (Whisper) OK',cls:'dim',d:1500},
+  {t:'[INIT] TTS (Edge-TTS)........ OK',cls:'dim',d:1750},
+  {t:'[INIT] FastAPI backend....... OK',cls:'dim',d:2000},
+  {t:'[INIT] Claude Sonnet 4.5..... OK',cls:'dim',d:2250},
+  {t:'',cls:'',d:2450},
+  {t:'สวัสดีครับ เจ — All systems nominal.',cls:'acc',d:2700},
+];
+
+function runBoot(){
+  const C=document.getElementById('bootLines');
+  const cur=document.createElement('span');cur.className='bc';
+  bootData.forEach((item,i)=>{
+    setTimeout(()=>{
+      const l=document.createElement('span');
+      l.className='bl '+(item.cls||'');
+      C.appendChild(l);
+      if(cur.parentNode)cur.parentNode.removeChild(cur);
+      if(item.t){l.classList.add('v');l.appendChild(cur);typeIn(l,item.t);}
+      if(i===bootData.length-1){
+        setTimeout(()=>{
+          cur.style.display='none';
+          document.getElementById('boot').classList.add('out');
+          document.getElementById('app').classList.add('on');
+          setTimeout(initApp,500);
+        },900);
+      }
+    },item.d);
+  });
+}
+function typeIn(el,txt){
+  const cur=document.querySelector('.bc');
+  let i=0;
+  const iv=setInterval(()=>{
+    i++;
+    // Set text content via a text node, keep cursor appended
+    while(el.firstChild)el.removeChild(el.firstChild);
+    el.appendChild(document.createTextNode(txt.slice(0,i)));
+    if(cur)el.appendChild(cur);
+    if(i>=txt.length)clearInterval(iv);
+  },22);
+}
+
+// ══════════════════════════════════════
+// PARTICLES
+// ══════════════════════════════════════
+const pC=document.getElementById('particleCanvas');
+const pX=pC.getContext('2d');
+let pts=[];
+function resizePts(){pC.width=innerWidth;pC.height=innerHeight;}
+function initPts(){
+  resizePts();pts=[];
+  const n=Math.floor(pC.width*pC.height/15000);
+  for(let i=0;i<n;i++)pts.push({x:Math.random()*pC.width,y:Math.random()*pC.height,vx:(Math.random()-.5)*.18,vy:(Math.random()-.5)*.18,r:Math.random()*1.3+.3,a:Math.random()*.35+.08});
+}
+function drawPts(){
+  pX.clearRect(0,0,pC.width,pC.height);
+  if(!particlesOn){requestAnimationFrame(drawPts);return;}
+  const [r,g,b]=accentRGB;
+  pts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0)p.x=pC.width;if(p.x>pC.width)p.x=0;
+    if(p.y<0)p.y=pC.height;if(p.y>pC.height)p.y=0;
+    pX.beginPath();pX.arc(p.x,p.y,p.r,0,Math.PI*2);
+    pX.fillStyle=`rgba(${r},${g},${b},${p.a})`;pX.fill();
+  });
+  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+    const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+    if(d<85){pX.beginPath();pX.moveTo(pts[i].x,pts[i].y);pX.lineTo(pts[j].x,pts[j].y);pX.strokeStyle=`rgba(${r},${g},${b},${(1-d/85)*.07})`;pX.lineWidth=.5;pX.stroke();}
+  }
+  requestAnimationFrame(drawPts);
+}
+
+// ══════════════════════════════════════
+// ORB (mini)
+// ══════════════════════════════════════
+let orbT=0;
+function drawOrb(cv,ctx,sz,state,t){
+  ctx.clearRect(0,0,sz,sz);
+  const cx=sz/2,cy=sz/2,r=sz*.32;
+  const [cr,cg,cb]=accentRGB;
+  const ts=t*.001;
+  if(orbStyle==='hex'){
+    const spin=state==='thinking'?ts*1.5:ts*.3;
+    for(let l=0;l<3;l++){
+      const lr=r*(.5+l*.28);
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(spin*(l%2?1:-1));
+      ctx.beginPath();for(let i=0;i<6;i++){const a=i*Math.PI/3;i===0?ctx.moveTo(Math.cos(a)*lr,Math.sin(a)*lr):ctx.lineTo(Math.cos(a)*lr,Math.sin(a)*lr);}
+      ctx.closePath();ctx.strokeStyle=state==='thinking'?`rgba(123,94,167,${.5-l*.12})`:`rgba(${cr},${cg},${cb},${.45-l*.1})`;ctx.lineWidth=1.5;ctx.stroke();ctx.restore();
+    }
+    const dg=ctx.createRadialGradient(cx,cy,0,cx,cy,r*.45);
+    dg.addColorStop(0,state==='thinking'?'rgba(200,180,255,.9)':`rgba(${cr},${cg},${cb},.9)`);dg.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,r*.45,0,Math.PI*2);ctx.fillStyle=dg;ctx.fill();
+  } else if(orbStyle==='ring'){
+    for(let i=0;i<4;i++){
+      const spin=state==='thinking'?ts*(1+i*.5):ts*(.2+i*.1);
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(spin*(i%2?1:-1));
+      ctx.beginPath();ctx.arc(0,0,r*(.3+i*.2),0,Math.PI*1.65);
+      ctx.strokeStyle=state==='thinking'?`rgba(123,94,167,${.6-i*.12})`:`rgba(${cr},${cg},${cb},${.6-i*.12})`;
+      ctx.lineWidth=1.2;ctx.lineCap='round';ctx.stroke();ctx.restore();
+    }
+    const dg=ctx.createRadialGradient(cx,cy,0,cx,cy,r*.2);
+    dg.addColorStop(0,state==='thinking'?'rgba(200,180,255,1)':`rgba(${cr},${cg},${cb},1)`);dg.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,r*.2,0,Math.PI*2);ctx.fillStyle=dg;ctx.fill();
+  } else {
+    const gs=state==='thinking'?1.25+Math.sin(ts*4)*.1:1.1+Math.sin(ts*1.4)*.04;
+    const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,r*gs*1.7);
+    grad.addColorStop(0,state==='thinking'?`rgba(123,94,167,.35)`:`rgba(${cr},${cg},${cb},.22)`);
+    grad.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,r*gs*1.7,0,Math.PI*2);ctx.fillStyle=grad;ctx.fill();
+    const sg=ctx.createRadialGradient(cx-r*.28,cy-r*.28,r*.08,cx,cy,r*gs);
+    sg.addColorStop(0,state==='thinking'?`rgba(180,150,255,.9)`:`rgba(${cr},${cg},${cb},.88)`);
+    sg.addColorStop(.6,state==='thinking'?`rgba(123,94,167,.5)`:`rgba(${cr},${cg},${cb},.35)`);
+    sg.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,r*gs,0,Math.PI*2);ctx.fillStyle=sg;ctx.fill();
+    if(state==='thinking'){for(let i=0;i<2;i++){const ang=ts*(2+i)+i*Math.PI/3;ctx.save();ctx.translate(cx,cy);ctx.rotate(ang);ctx.beginPath();ctx.ellipse(0,0,r*1.4,r*.38,0,0,Math.PI*2);ctx.strokeStyle=`rgba(123,94,167,${.3-i*.08})`;ctx.lineWidth=1;ctx.stroke();ctx.restore();}}
+    if(state==='speaking'){const bars=14;for(let i=0;i<bars;i++){const ang=(i/bars)*Math.PI*2,h=r*.28*(0.5+Math.abs(Math.sin(ts*7+i*.9)));const x1=cx+Math.cos(ang)*(r*1.15),y1=cy+Math.sin(ang)*(r*1.15),x2=cx+Math.cos(ang)*(r*1.15+h),y2=cy+Math.sin(ang)*(r*1.15+h);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=`rgba(${cr},${cg},${cb},.55)`;ctx.lineWidth=1.8;ctx.lineCap='round';ctx.stroke();}}
+  }
+}
+function createMiniOrb(){const cv=document.createElement('canvas');cv.width=cv.height=68;cv.className='lumi-av';miniOrbs.push({cv,cx:cv.getContext('2d')});return cv;}
+function animLoop(ts){
+  orbT=ts;
+  miniOrbs.forEach(o=>drawOrb(o.cv,o.cx,68,lumiState,ts));
+  requestAnimationFrame(animLoop);
+}
+
+// ══════════════════════════════════════
+// CLOCK + SYS
+// ══════════════════════════════════════
+function tick(){
+  const n=new Date(new Date().toLocaleString('en',{timeZone:'Asia/Bangkok'}));
+  const p=v=>String(v).padStart(2,'0');
+  document.getElementById('clock').textContent=`${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('cdate').textContent=`${days[n.getDay()]} ${n.getDate()} ${months[n.getMonth()]} ${n.getFullYear()}`;
+}
+setInterval(tick,1000);
+let sys={cpu:42,ram:67,gpu:28};
+function updateSys(){
+  sys.cpu=Math.max(12,Math.min(95,sys.cpu+(Math.random()-.5)*16));
+  sys.ram=Math.max(40,Math.min(92,sys.ram+(Math.random()-.5)*8));
+  sys.gpu=Math.max(5,Math.min(88,sys.gpu+(Math.random()-.5)*20));
+  ['cpu','ram','gpu'].forEach(k=>{
+    document.getElementById(k+'Bar').style.width=sys[k]+'%';
+    document.getElementById(k+'Val').textContent=Math.round(sys[k])+'%';
+  });
+}
+setInterval(updateSys,2800);
+
+// ══════════════════════════════════════
+// SPARKLINES
+// ══════════════════════════════════════
+const sparkData1=[],sparkData2=[];
+function initSparks(){
+  for(let i=0;i<30;i++){sparkData1.push(80+Math.random()*140);sparkData2.push(10+Math.random()*30);}
+}
+function drawSpark(canvasId,data,color){
+  const cv=document.getElementById(canvasId);if(!cv)return;
+  const ctx=cv.getContext('2d');const w=cv.offsetWidth||320,h=44;
+  cv.width=w;cv.height=h;
+  const mn=Math.min(...data),mx=Math.max(...data),range=mx-mn||1;
+  ctx.clearRect(0,0,w,h);
+  ctx.beginPath();
+  data.forEach((v,i)=>{const x=(i/(data.length-1))*w,y=h-((v-mn)/range)*(h-8)-4;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.stroke();
+  const grad=ctx.createLinearGradient(0,0,0,h);grad.addColorStop(0,color.replace('1)','0.2)'));grad.addColorStop(1,color.replace('1)','0)'));
+  ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+}
+function updateSparks(){
+  sparkData1.push(60+Math.random()*160);if(sparkData1.length>30)sparkData1.shift();
+  sparkData2.push(10+Math.random()*35);if(sparkData2.length>30)sparkData2.shift();
+  drawSpark('spark1',sparkData1,'rgba(0,212,255,1)');
+  drawSpark('spark2',sparkData2,'rgba(123,94,167,1)');
+  const lat=Math.round(sparkData1[sparkData1.length-1]);
+  document.getElementById('sv1').textContent=lat+'ms';
+  document.getElementById('sv2').textContent=Math.round(sparkData2[sparkData2.length-1])+' rpm';
+  document.getElementById('hc-latency').innerHTML=lat+'<span style="font-size:12px">ms</span>';
+}
+setInterval(updateSparks,1500);
+function updateEndpoints(){
+  const ids=['lat-chat','lat-stt','lat-tts','lat-trans','lat-gram'];
+  const bases=[75,190,155,280,240];
+  ids.forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=Math.round(bases[i]+(Math.random()-.5)*40)+'ms';});
+}
+setInterval(updateEndpoints,3000);
+
+// ══════════════════════════════════════
+// CHAT
+// ══════════════════════════════════════
+const sampleMsgs=[
+  {r:'lumi',t:'สวัสดีครับ เจ 👋\nผมคือ LUMINOUS v2.0 — ระบบ AI ส่วนตัวของคุณ\n\nพร้อมช่วยเหลือทุกอย่างครับ — chat, voice translate, ตรวจไวยากรณ์, สรุปเนื้อหา — ทั้งภาษาไทยและอังกฤษ'},
+  {r:'je',t:'Lumi — วันนี้ช่วยอธิบาย diffusion models ให้หน่อยได้ไหม?'},
+  {r:'lumi',t:'ได้เลยครับ เจ 🔬\n\nDiffusion Models ทำงานด้วยการค่อยๆ เพิ่ม Gaussian noise เข้าข้อมูล (forward process) แล้วสอนโมเดลให้ denoise ย้อนกลับ (reverse process)\n\nจุดแข็งหลักคือ training stability และ sample diversity ที่ชนะ GAN ครับ อยากเจาะลึกส่วนไหนเป็นพิเศษไหม?'},
+];
+const replies=[
+  "ครับ เจ — Score Matching และ DDPM เชื่อมกันลึกๆ ครับ\n\nทั้งคู่คือ denoising score matching — DDPM predict noise ε ขณะที่ Score Matching estimate ∇log p(x) โดยตรง แต่ Song et al. แสดงว่าทั้งสองเทียบเท่ากัน parameterization ต่างกันเท่านั้น",
+  "น่าสนใจมากครับ 🔭\n\nอยากให้ผมสร้าง comparison table ระหว่าง DDPM, Score SDE, และ Flow Matching ไหมครับ?",
+  "เข้าใจครับ — ผม recommend ให้เริ่มจาก DDPM paper (Ho et al. 2020) ก่อน แล้วต่อด้วย Improved DDPM ครับ มี code open-source ให้ศึกษาด้วย",
+  "ดีมากครับ เจ! ถ้าต้องการ ผมสามารถช่วยสรุป paper นี้ได้เลย — ลองไปที่ Language → Summarize ได้เลยครับ 📄"
+];
+let rIdx=0;
+function addMsg(role,text,anim=true){
+  const msgs=document.getElementById('messages');
+  const row=document.createElement('div');row.className='msg-row '+role;
+  if(!anim)row.style.animation='none';
+  if(role==='lumi'){const av=document.createElement('div');av.className='lumi-av';const oc=createMiniOrb();av.appendChild(oc);row.appendChild(av);}
+  const b=document.createElement('div');b.className='bubble '+role;
+  const nm=document.createElement('div');nm.className='bname '+role;nm.textContent=role==='lumi'?'LUMINOUS':'เจ';b.appendChild(nm);
+  const txt=document.createElement('div');txt.style.whiteSpace='pre-wrap';txt.textContent=text;b.appendChild(txt);
+  row.appendChild(b);msgs.appendChild(row);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+function showTyping(){
+  const msgs=document.getElementById('messages');
+  const row=document.createElement('div');row.className='typing-row';row.id='tyRow';
+  const av=document.createElement('div');av.className='lumi-av';av.appendChild(createMiniOrb());row.appendChild(av);
+  const d=document.createElement('div');d.className='typing-dots';d.innerHTML='<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  row.appendChild(d);msgs.appendChild(row);msgs.scrollTop=msgs.scrollHeight;
+}
+function removeTyping(){const t=document.getElementById('tyRow');if(t)t.remove();}
+function setStatus(s,lbl){
+  lumiState=s;
+  document.getElementById('sdot').className='sdot'+(s==='thinking'?' think':'');
+  document.getElementById('slbl').textContent=lbl||s.toUpperCase();
+  document.getElementById('taskLbl').textContent=s==='thinking'?'Thinking…':s==='speaking'?'Speaking…':'Chat Mode';
+}
+function sendMessage(){
+  const inp=document.getElementById('textInput');const txt=inp.value.trim();if(!txt)return;
+  inp.value='';inp.style.height='auto';
+  addMsg('je',txt);setStatus('thinking','THINKING');showTyping();
+  setTimeout(()=>{removeTyping();setStatus('speaking','SPEAKING');addMsg('lumi',replies[rIdx++%replies.length]);setTimeout(()=>setStatus('idle','ONLINE'),2200);},1600+Math.random()*700);
+}
+function newChat(){document.getElementById('messages').innerHTML='';miniOrbs.length=0;setTimeout(()=>{addMsg('lumi','บทสนทนาใหม่เริ่มต้นแล้วครับ เจ — มีอะไรให้ช่วยไหมครับ?');setStatus('idle','ONLINE');},100);}
+function toggleMic(){document.querySelector('.mic-btn').style.color=document.querySelector('.mic-btn').style.color==='rgb(123, 94, 167)'?'':'rgb(123, 94, 167)';}
+
+// ══════════════════════════════════════
+// TABS
+// ══════════════════════════════════════
+function gotoTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===id));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id==='screen-'+id));
+  currentTab=id;
+  if(id==='system'){initSparks();setTimeout(()=>{drawSpark('spark1',sparkData1,'rgba(0,212,255,1)');drawSpark('spark2',sparkData2,'rgba(123,94,167,1)');},100);}
+}
+
+// ══════════════════════════════════════
+// VOICE TRANSLATE
+// ══════════════════════════════════════
+const pipelineSimSteps=[
+  {node:0,label:'กำลังฟัง… / Listening…'},
+  {node:1,label:'Whisper STT Processing…'},
+  {node:2,label:'Claude AI Translating…'},
+  {node:3,label:'Edge-TTS Synthesizing…'},
+  {node:4,label:'Complete ✓'},
+];
+const voiceSamples=[
+  {src:'ผมกำลังพัฒนา AI สำหรับการแปลภาษา — มีข้อสงสัยอะไรไหมครับ?',tgt:"I'm developing AI for language translation — do you have any questions?"},
+  {src:'วันนี้อากาศดีมากเลย ขอบคุณที่ช่วยแปลภาษาให้นะครับ',tgt:"The weather is really nice today. Thank you for helping translate."},
+  {src:'Diffusion models ใช้ในการสร้างภาพที่มีความสมจริงสูง',tgt:"Diffusion models are used to generate highly realistic images."},
+];
+let vIdx=0;
+function toggleVoiceRec(){
+  voiceRecording=!voiceRecording;
+  const mic=document.getElementById('bigMic');
+  const hint=document.getElementById('micHint');
+  if(voiceRecording){
+    mic.classList.add('active');
+    hint.textContent='กำลังฟัง… / Recording — tap to stop';
+    lumiState='speaking';
+    runPipeline();
+  } else {
+    mic.classList.remove('active');
+    hint.textContent='กดเพื่อเริ่ม / Tap to speak';
+    lumiState='idle';
+    resetPipeline();
+  }
+}
+function resetPipeline(){
+  for(let i=0;i<=4;i++){const n=document.getElementById('pn'+i);if(n){n.classList.remove('active','done');}}
+}
+function runPipeline(){
+  resetPipeline();
+  const sample=voiceSamples[vIdx++%voiceSamples.length];
+  let step=0;
+  const iv=setInterval(()=>{
+    if(step>0){const prev=document.getElementById('pn'+(step-1));if(prev){prev.classList.remove('active');prev.classList.add('done');}}
+    if(step<5){const cur=document.getElementById('pn'+step);if(cur)cur.classList.add('active');}
+    if(step===1){document.getElementById('vTranscript').textContent=sample.src;document.getElementById('vTranscript').className='vp-text has-content';}
+    if(step===3){document.getElementById('vTranslation').textContent=sample.tgt;document.getElementById('vTranslation').className='vp-text has-content';}
+    if(step===5){clearInterval(iv);voiceRecording=false;document.getElementById('bigMic').classList.remove('active');document.getElementById('micHint').textContent='กดเพื่อเริ่มใหม่ / Tap again';lumiState='idle';}
+    step++;
+  },900);
+}
+
+// ══════════════════════════════════════
+// LANGUAGE LEARN
+// ══════════════════════════════════════
+function setLearnTab(i,el){
+  document.querySelectorAll('.stab').forEach((s,j)=>s.classList.toggle('on',j===i));
+  for(let j=0;j<4;j++){const p=document.getElementById('lt'+j);if(p)p.style.display=j===i?'':'none';}
+}
+function doTranslate(){
+  const inp=document.getElementById('transInput').value.trim();if(!inp)return;
+  const out=document.getElementById('transOutput');out.style.display='block';
+  out.textContent='Translating…';
+  setTimeout(()=>{
+    const samples={
+      'default':'Here is the translation:\n\n"'+inp+'"\n\n→ The text has been translated using Claude AI with Thai-English bilingual support. Phonetic guide: [sà-wàt-dee kráp] (สวัสดีครับ = Hello/Good day)',
+    };
+    out.innerHTML='<div style="color:var(--cyan);font-family:var(--font-ui);font-size:10px;letter-spacing:.12em;margin-bottom:8px;text-transform:uppercase">Translation Result</div>'+
+      '<div style="color:var(--white)">'+inp+'</div>'+
+      '<div style="color:rgba(240,244,255,.4);margin:10px 0 4px;font-size:11px;font-family:var(--font-ui)">→ English</div>'+
+      '<div style="color:var(--white)">"I am developing a personal AI assistant called LUMINOUS for language processing and translation tasks — it supports both Thai and English seamlessly."</div>'+
+      '<div style="color:rgba(0,212,255,.5);font-size:10.5px;margin-top:8px;font-family:var(--font-ui)">🔊 Phonetic: [chǎn gam-lang pat-ta-na]</div>';
+  },1200);
+}
+function doGrammar(){
+  const inp=document.getElementById('gramInput').value.trim();if(!inp)return;
+  const out=document.getElementById('gramOutput');const sb=document.getElementById('scoreBar');
+  out.style.display='block';sb.style.display='none';out.textContent='Checking grammar…';
+  setTimeout(()=>{
+    const score=Math.floor(75+Math.random()*22);
+    out.innerHTML='<div style="color:var(--green);font-family:var(--font-ui);font-size:10px;letter-spacing:.12em;margin-bottom:8px;text-transform:uppercase">Grammar Analysis</div>'+
+      '<div style="color:var(--white);margin-bottom:8px">✓ Your sentence structure is clear and well-formed.</div>'+
+      '<div style="color:var(--gold);font-size:12.5px;margin-bottom:4px">Suggestions:</div>'+
+      '<div style="color:rgba(240,244,255,.6);font-size:12.5px;line-height:1.7">• Consider using active voice for clearer impact<br>• "which" → "that" for restrictive clauses<br>• Add a comma after introductory phrases</div>';
+    sb.style.display='flex';
+    document.getElementById('scoreFill').style.width=score+'%';
+    document.getElementById('scoreLbl').textContent=score+'/100';
+  },1500);
+}
+function startPractice(mode){
+  alert(`Starting ${mode} practice mode…\n\n(Connect to localhost:8000 for real practice sessions)`);
+}
+function setSumLevel(l,el){
+  sumLevel=l;document.querySelectorAll('.lchip').forEach(c=>c.classList.remove('on'));el.classList.add('on');
+}
+function doSummarize(){
+  const inp=document.getElementById('sumInput').value.trim();if(!inp)return;
+  const out=document.getElementById('sumOutput');out.style.display='block';out.textContent='Summarizing…';
+  setTimeout(()=>{
+    out.innerHTML='<div style="color:var(--cyan);font-family:var(--font-ui);font-size:10px;letter-spacing:.12em;margin-bottom:10px;text-transform:uppercase">Summary ('+sumLevel+')</div>'+
+      '<div style="color:var(--white);margin-bottom:10px">The text discusses AI language models and their application in real-world translation tasks. Key focus is on efficiency, accuracy, and bilingual Thai-English support.</div>'+
+      '<div style="color:var(--gold);font-size:11px;font-family:var(--font-ui);margin-bottom:6px;letter-spacing:.08em">KEY POINTS</div>'+
+      '<div style="color:rgba(240,244,255,.65);font-size:12.5px;line-height:1.8">• Core concept: Neural machine translation<br>• Bilingual capability: Thai ↔ English<br>• Model used: Claude Sonnet 4.5<br>• Context: Personal AI assistant development</div>'+
+      '<div style="color:rgba(0,212,255,.5);font-size:10.5px;margin-top:10px;font-family:var(--font-ui)">📚 KEY VOCAB: diffusion, stochastic, latent space, denoising</div>';
+  },1800);
+}
+
+// ══════════════════════════════════════
+// MODELS
+// ══════════════════════════════════════
+function selectModel(m){
+  ['claude','gpt','ollama','web'].forEach(k=>{
+    const c=document.getElementById('mc-'+k);if(!c)return;
+    c.classList.toggle('active',k===m);
+    const btn=c.querySelector('.select-btn');
+    btn.textContent=k===m?'✓ Active Model':('Switch to '+{claude:'Claude',gpt:'GPT-4o',ollama:'Ollama',web:'Web Search'}[k]);
+  });
+  activeModel=m;
+  document.getElementById('hc-model').textContent={claude:'Claude',gpt:'GPT-4o',ollama:'Ollama',web:'Search'}[m];
+}
+
+// ══════════════════════════════════════
+// WAKE WORD
+// ══════════════════════════════════════
+function showWakeWord(text){
+  const el=document.getElementById('wakeWord');
+  document.getElementById('wwText').textContent=text||'Hey Luminas — Detected';
+  el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3500);
+}
+// Simulate occasional wake word
+setInterval(()=>{if(Math.random()<.08)showWakeWord(['Hey Luminas — Detected','ลูมินัส — รับทราบครับ'][Math.floor(Math.random()*2)]);},12000);
+
+// Keyboard shortcuts
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.key==='l'){e.preventDefault();showWakeWord('Ctrl+L — Listening activated');}
+  if(e.ctrlKey&&e.code==='Space'){e.preventDefault();showWakeWord('Hey Luminas — Activated');}
+  if(e.ctrlKey&&e.key==='n'){e.preventDefault();gotoTab('chat');newChat();}
+});
+
+// ══════════════════════════════════════
+// HUD + TWEAKS
+// ══════════════════════════════════════
+function toggleHud(){hudOpen=!hudOpen;document.getElementById('hud').classList.toggle('off',!hudOpen);document.getElementById('hudBtn').classList.toggle('on',hudOpen);}
+function toggleEl(el){el.classList.toggle('on');}
+function toggleTweaks(){document.getElementById('tweaks').classList.toggle('show');document.getElementById('tweakBtn').classList.toggle('on');}
+function tweak(k){
+  const el=document.getElementById('t-'+k);el.classList.toggle('on');const on=el.classList.contains('on');
+  if(k==='hud'){hudOpen=on;document.getElementById('hud').classList.toggle('off',!on);}
+  if(k==='part')particlesOn=on;
+  if(k==='scan'){const s=document.getElementById('noscan');if(!on&&!s){const ns=document.createElement('style');ns.id='noscan';ns.textContent='body::after{display:none}';document.head.appendChild(ns);}else if(on&&s)s.remove();}
+}
+function setAccent(v){
+  const map={cyan:[0,212,255],violet:[123,94,167],gold:[255,196,80],green:[0,229,160]};
+  const hex={cyan:'#00d4ff',violet:'#7b5ea7',gold:'#ffc450',green:'#00e5a0'};
+  accentRGB=map[v]||map.cyan;
+  const h=hex[v]||hex.cyan;
+  document.documentElement.style.setProperty('--cyan',h);
+  document.documentElement.style.setProperty('--cyan2',`rgba(${accentRGB[0]},${accentRGB[1]},${accentRGB[2]},0.15)`);
+  document.documentElement.style.setProperty('--border',`rgba(${accentRGB[0]},${accentRGB[1]},${accentRGB[2]},0.16)`);
+}
+function setOrbStyle(v){orbStyle=v;}
+
+// Input auto-resize + Enter
+document.getElementById('textInput').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,110)+'px';});
+document.getElementById('textInput').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+
+// Tweaks host protocol
+window.addEventListener('message',e=>{
+  if(e.data?.type==='__activate_edit_mode')document.getElementById('tweaks').classList.add('show');
+  if(e.data?.type==='__deactivate_edit_mode')document.getElementById('tweaks').classList.remove('show');
+});
+window.parent.postMessage({type:'__edit_mode_available'},'*');
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+function initApp(){
+  tick();updateSys();initPts();drawPts();requestAnimationFrame(animLoop);
+  initSparks();
+  let d=0;
+  sampleMsgs.forEach((m,i)=>{setTimeout(()=>addMsg(m.r,m.t,i>0),d);d+=i===0?0:180;});
+  setTimeout(updateSparks,800);
+  setAccent('cyan');
+}
+window.addEventListener('resize',()=>{resizePts();initPts();});
+runBoot();
+</script>
+</body>
+</html>
